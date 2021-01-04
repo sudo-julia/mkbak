@@ -12,7 +12,7 @@ from typing import Generator, Optional
 from iterfzf import iterfzf
 
 
-__version__ = "v0.4.0"
+__version__ = "v0.5.0"
 # pylint: disable=fixme, unsubscriptable-object
 # TODO remove unsubscriptable-object once pylint updates (currnetly broken on typing,
 # see issue #3882)
@@ -63,7 +63,7 @@ def main():
     # TODO is there a way to store options in a tuple and unload them into
     #      both functions?
     try:
-        if not recurse:
+        if no_recurse:
             files = iterfzf(
                 iterable=(iterate_files(path, filetype, hidden)),
                 case_sensitive=ignore,
@@ -84,7 +84,7 @@ def main():
                 multi=True,
             )
     except TypeError:
-        if not recurse:
+        if no_recurse:
             files = iterfzf(
                 iterable=(iterate_files(path, filetype, hidden)),
                 case_sensitive=ignore,
@@ -136,6 +136,7 @@ if __name__ == "__main__":
     # TODO make extension copying recursive
     # TODO arg addition to recursive that allows for depth to recurse
     # TODO option to find by file or dir
+    # TODO use pathlib to expand '~' to $HOME
     parser = argparse.ArgumentParser()
     main_args = parser.add_argument_group()
     matching_group = parser.add_mutually_exclusive_group()
@@ -176,7 +177,9 @@ if __name__ == "__main__":
         type=str,
     )
     main_args.add_argument(
-        "-r", "--recursive", help="recurse through current dir", action="store_true"
+        "--no_recurse",
+        help="run mkbak in the current dir only (no recursion)",
+        action="store_true",
     )
     main_args.add_argument(
         "-v", "--verbose", help="print file file created", action="store_true"
@@ -187,21 +190,17 @@ if __name__ == "__main__":
 
     exact: bool = args.exact
     filetype: Optional[str] = args.filetype
+    # set height as a constant, using a oneliner if-else statement
     HEIGHT: str = str(args.height) + "%" if args.height in range(0, 101) else "100%"
     hidden: bool = args.all
     ignore: bool = args.ignore_case
     path: str = args.path
     preview: Optional[str] = args.preview
-    recurse: bool = args.recursive
+    no_recurse: bool = args.no_recurse
     verbose: bool = args.verbose
 
     if args.version:
         print(f"mkbak.py {__version__}")
         sys.exit(0)
-    # set height as a constant, using a oneliner if-else statement
-    # if args.height in range(0, 101):
-    #    height = str(args.height) + "%"
-    # else:
-    #    height = "100%"
 
     main()
