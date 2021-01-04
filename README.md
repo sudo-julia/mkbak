@@ -1,8 +1,18 @@
-# `mkbak.py` finds files, pipes them through `fzf` with `iterfzf`, and allows you to select files to create backups of
+# Functionality
+`mkbak` makes backups of files in a given directory \[linux only]
+Until recently (pre v0.5.0), `mkbak` was developed in my [`~/bin/`](https://github.com/sudo-julia/bin) repo, so for old changes/commits, look there.
 
 
 ## Requirements
   - [iterfzf](https://github.com/dahlia/iterfzf)
-    - if you want the height option, use my [fork](https://github.com/sudo-julia/iterfzf)
-  - python3.6 or higher
+    - If you want the height option, use my [fork](https://github.com/sudo-julia/iterfzf)
+  - Python3.6 or higher
+  - A linux distribution to run the program on. I am considering developing a version for OSX and Windows as well.
 
+## TODO
+- [ ] Write documentation
+- [ ] Make tests
+- [ ] Look into developing versions for BSD/OSX/Windows
+
+## Bugs
+Open an issue or PR

@@ -8,28 +8,30 @@ import os
 import shutil
 import stat
 import sys
+from pathlib import Path
 from typing import Generator, Optional
 from iterfzf import iterfzf
 
 
-__version__ = "v0.5.0"
+__version__ = "v0.5.1"
 # pylint: disable=fixme, unsubscriptable-object
-# TODO remove unsubscriptable-object once pylint updates (currnetly broken on typing,
+# TODO remove unsubscriptable-object once pylint updates (currently broken on typing,
 # see issue #3882)
 # TODO put iterators in a class
 
 
 def copy_all(file: str, location: str):
     """copy a file owner and group intact"""
-    # function from https://stackoverflow.com/a/43761127
+    # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
     # copy content, stat-info, mode and timestamps
     try:
         shutil.copytree(file, location)
     except NotADirectoryError:
         shutil.copy2(file, location)
     # copy owner and group
-    owner_group = os.stat(file)
-    os.chown(location, owner_group[stat.ST_UID], owner_group[stat.ST_GID])
+    finally:
+        owner_group = os.stat(file)
+        os.chown(location, owner_group[stat.ST_UID], owner_group[stat.ST_GID])
 
 
 def iterate_files(
@@ -112,8 +114,6 @@ def main():
     except TypeError:
         pass
 
-    sys.exit(0)
-
 
 def recursive(search_path: str, find_hidden=None) -> Generator[str, None, None]:
     """recursively yield DirEntries"""
@@ -136,7 +136,6 @@ if __name__ == "__main__":
     # TODO make extension copying recursive
     # TODO arg addition to recursive that allows for depth to recurse
     # TODO option to find by file or dir
-    # TODO use pathlib to expand '~' to $HOME
     parser = argparse.ArgumentParser()
     main_args = parser.add_argument_group()
     matching_group = parser.add_mutually_exclusive_group()
@@ -168,7 +167,11 @@ if __name__ == "__main__":
         action="store_true",
     )
     main_args.add_argument(
-        "-p", "--path", help="directory to run in (default './')", default=".", type=str
+        "-p",
+        "--path",
+        help="directory to iterate through (default './')",
+        default=".",
+        type=str,
     )
     main_args.add_argument(
         "--preview",
@@ -194,7 +197,8 @@ if __name__ == "__main__":
     HEIGHT: str = str(args.height) + "%" if args.height in range(0, 101) else "100%"
     hidden: bool = args.all
     ignore: bool = args.ignore_case
-    path: str = args.path
+    # set the path as argument given, and expand '~' to "$HOME" if given
+    path: str = args.path if args.path[0] != "~" else Path(args.path).expanduser()
     preview: Optional[str] = args.preview
     no_recurse: bool = args.no_recurse
     verbose: bool = args.verbose
@@ -204,3 +208,4 @@ if __name__ == "__main__":
         sys.exit(0)
 
     main()
+    sys.exit(0)
