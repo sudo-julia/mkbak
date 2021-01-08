@@ -1,6 +1,6 @@
 # Functionality
 `mkbak` makes backups of files in a given directory \[linux only]
-Until recently (pre v0.5.0), `mkbak` was developed in my [`~/bin/`](https://github.com/sudo-julia/bin) repo, so for old changes/commits, look there.
+Until recently (pre v0.5.0), `mkbak` was developed in my [`~/bin`](https://github.com/sudo-julia/bin) repo, so for old changes/commits, look there.
 
 
 ## Requirements
@@ -13,6 +13,7 @@ Until recently (pre v0.5.0), `mkbak` was developed in my [`~/bin/`](https://gith
 - [ ] Write documentation
 - [ ] Make tests
 - [ ] Look into developing versions for BSD/OSX/Windows
+- [ ] Github actions for linting
 
 ## Bugs
 Open an issue or PR
