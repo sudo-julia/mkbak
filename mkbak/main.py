@@ -17,7 +17,7 @@ from iterfzf import iterfzf
 # TODO remove unsubscriptable-object once pylint updates (currently broken on typing,
 # see issue #3882)
 
-__version__ = "v0.6.3"
+__version__ = "v0.6.4"
 # TODO move copied and errors to a local scope
 copied: List[str] = []
 errors: List[str] = []
@@ -41,7 +41,6 @@ def copy_all(file: str, location: str) -> bool:
         return False
 
 
-# TODO condense iteration to one function
 def iterate_files(
     search_path: str, file_ext: Optional[str], find_hidden=False
 ) -> Generator[str, None, None]:
@@ -51,25 +50,8 @@ def iterate_files(
             try:
                 if not find_hidden and entry.name.startswith("."):
                     pass
-                elif file_ext and not entry.name.endswith(file_ext):
-                    pass
-                else:
-                    yield entry.path
-            except PermissionError:
-                errors.append(f"Permission Denied: Unable to access '{entry}'")
-
-
-def recursive(
-    search_path: str, file_ext: Optional[str], find_hidden=None
-) -> Generator[str, None, None]:
-    """recursively yield DirEntries"""
-    with os.scandir(search_path) as iterated:
-        for entry in iterated:
-            try:
-                if not find_hidden and entry.name.startswith("."):
-                    pass
-                elif entry.is_dir(follow_symlinks=False):
-                    yield from recursive(entry.path, FILETYPE, HIDDEN)
+                elif not NO_RECURSE and entry.is_dir(follow_symlinks=False):
+                    yield from iterate_files(entry.path, FILETYPE, HIDDEN)
                 elif file_ext and not entry.name.endswith(file_ext):
                     pass
                 else:
@@ -80,49 +62,26 @@ def recursive(
 
 def main():
     """parse args and launch the whole thing"""
-    # TODO is there a way to store options in a tuple and unload them into
-    #      both functions?
     # if the height option isn't present, fall back to the original 'iterfzf'
     try:
-        if NO_RECURSE:
-            files = iterfzf(
-                iterable=(iterate_files(PATH, FILETYPE, HIDDEN)),
-                case_sensitive=IGNORE,
-                exact=EXACT,
-                encoding="utf-8",
-                height=HEIGHT,
-                preview=PREVIEW,
-                multi=True,
-            )
-        else:
-            files = iterfzf(
-                iterable=(recursive(PATH, FILETYPE, HIDDEN)),
-                case_sensitive=IGNORE,
-                exact=EXACT,
-                encoding="utf-8",
-                height=HEIGHT,
-                preview=PREVIEW,
-                multi=True,
-            )
+        files = iterfzf(
+            iterable=(iterate_files(PATH, FILETYPE, HIDDEN)),
+            case_sensitive=IGNORE,
+            exact=EXACT,
+            encoding="utf-8",
+            height=HEIGHT,
+            preview=PREVIEW,
+            multi=True,
+        )
     except TypeError:
-        if NO_RECURSE:
-            files = iterfzf(
-                iterable=(iterate_files(PATH, FILETYPE, HIDDEN)),
-                case_sensitive=IGNORE,
-                exact=EXACT,
-                encoding="utf-8",
-                preview=PREVIEW,
-                multi=True,
-            )
-        else:
-            files = iterfzf(
-                iterable=(recursive(PATH, FILETYPE, HIDDEN)),
-                case_sensitive=IGNORE,
-                exact=EXACT,
-                encoding="utf-8",
-                preview=PREVIEW,
-                multi=True,
-            )
+        files = iterfzf(
+            iterable=(iterate_files(PATH, FILETYPE, HIDDEN)),
+            case_sensitive=IGNORE,
+            exact=EXACT,
+            encoding="utf-8",
+            preview=PREVIEW,
+            multi=True,
+        )
 
     if files:
         for file in files:

@@ -22,7 +22,7 @@ Until recently (pre v0.5.0), `mkbak` was developed in my [`~/bin`](https://githu
 - [ ] Create `__main__.py`
 - [ ] Write documentation
 - [ ] Make tests
-- [ ] Look into developing versions for BSD/OSX/Windows
+- [ ] Look into developing versions for OSX/Windows
 - [ ] Github actions for linting
 
 ## Bugs
