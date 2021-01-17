@@ -13,7 +13,7 @@ from typing import Generator, Optional
 from iterfzf import iterfzf
 
 
-__version__ = "v0.6.0"
+__version__ = "v0.6.1"
 errors: list = []
 # pylint: disable=fixme, unsubscriptable-object
 # TODO remove unsubscriptable-object once pylint updates (currently broken on typing,
@@ -26,12 +26,13 @@ def copy_all(file: str, location: str):
     # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
     # copy content, stat-info, mode and timestamps
     try:
-        shutil.copytree(file, location)
+        if Path(file).is_dir():
+            shutil.copytree(file, location)
+        elif Path(file).is_file():
+            shutil.copy2(file, location)
         # copy owner and group
         owner_group = os.stat(file)
         os.chown(location, owner_group[stat.ST_UID], owner_group[stat.ST_GID])
-    except NotADirectoryError:
-        shutil.copy2(file, location)
     except PermissionError:
         errors.append(f"Permission Denied: Unable to access '{file}'")
 
