@@ -3,25 +3,27 @@
 iterate through files, feed them to 'iterfzf' for selection
 and make backups of the chosen files
 """
-import argparse
 import os
 import shutil
 import stat
 import sys
+from argparse import ArgumentParser
 from pathlib import Path
-from typing import Generator, Optional
+from typing import Generator, List, Optional
 from iterfzf import iterfzf
 
 
-__version__ = "v0.6.1"
-errors: list = []
 # pylint: disable=fixme, unsubscriptable-object
 # TODO remove unsubscriptable-object once pylint updates (currently broken on typing,
 # see issue #3882)
-# TODO condense iteration to one function
+
+__version__ = "v0.6.3"
+# TODO move copied and errors to a local scope
+copied: List[str] = []
+errors: List[str] = []
 
 
-def copy_all(file: str, location: str):
+def copy_all(file: str, location: str) -> bool:
     """copy a file owner and group intact"""
     # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
     # copy content, stat-info, mode and timestamps
@@ -33,40 +35,51 @@ def copy_all(file: str, location: str):
         # copy owner and group
         owner_group = os.stat(file)
         os.chown(location, owner_group[stat.ST_UID], owner_group[stat.ST_GID])
+        return True
     except PermissionError:
         errors.append(f"Permission Denied: Unable to access '{file}'")
+        return False
 
 
+# TODO condense iteration to one function
 def iterate_files(
     search_path: str, file_ext: Optional[str], find_hidden=False
 ) -> Generator[str, None, None]:
     """iterate through files as DirEntries to feed to fzf wrapper"""
     with os.scandir(search_path) as iterated:
-        if file_ext:
-            for entry in iterated:
+        for entry in iterated:
+            try:
                 if not find_hidden and entry.name.startswith("."):
                     pass
-                else:
-                    if entry.name.endswith(file_ext):
-                        try:
-                            yield entry.path
-                        except PermissionError:
-                            errors.append(
-                                f"Permission Denied: Unable to access '{entry}'"
-                            )
-        elif not file_ext:
-            for entry in iterated:
-                if not find_hidden and entry.name.startswith("."):
+                elif file_ext and not entry.name.endswith(file_ext):
                     pass
                 else:
-                    try:
-                        yield entry.path
-                    except PermissionError:
-                        errors.append(f"Permission Denied: Unable to access '{entry}'")
+                    yield entry.path
+            except PermissionError:
+                errors.append(f"Permission Denied: Unable to access '{entry}'")
+
+
+def recursive(
+    search_path: str, file_ext: Optional[str], find_hidden=None
+) -> Generator[str, None, None]:
+    """recursively yield DirEntries"""
+    with os.scandir(search_path) as iterated:
+        for entry in iterated:
+            try:
+                if not find_hidden and entry.name.startswith("."):
+                    pass
+                elif entry.is_dir(follow_symlinks=False):
+                    yield from recursive(entry.path, FILETYPE, HIDDEN)
+                elif file_ext and not entry.name.endswith(file_ext):
+                    pass
+                else:
+                    yield entry.path
+            except PermissionError:
+                errors.append(f"Permission Denied: Unable to access '{entry}'")
 
 
 def main():
-    """:"""
+    """parse args and launch the whole thing"""
     # TODO is there a way to store options in a tuple and unload them into
     #      both functions?
     # if the height option isn't present, fall back to the original 'iterfzf'
@@ -83,7 +96,7 @@ def main():
             )
         else:
             files = iterfzf(
-                iterable=(recursive(PATH, HIDDEN)),
+                iterable=(recursive(PATH, FILETYPE, HIDDEN)),
                 case_sensitive=IGNORE,
                 exact=EXACT,
                 encoding="utf-8",
@@ -103,7 +116,7 @@ def main():
             )
         else:
             files = iterfzf(
-                iterable=(recursive(PATH, HIDDEN)),
+                iterable=(recursive(PATH, FILETYPE, HIDDEN)),
                 case_sensitive=IGNORE,
                 exact=EXACT,
                 encoding="utf-8",
@@ -114,42 +127,33 @@ def main():
     if files:
         for file in files:
             try:
-                location = f"{file}.bak"
-                copy_all(file, location)
-                # TODO only print this for files that got copied
-                if VERBOSE:
-                    print(f"{file} -> {location}")
+                location: str = f"{file}.bak"
+                success = copy_all(file, location)
+                if VERBOSE and success:
+                    copied.append(f"{file} -> {location}")
             except TypeError:
                 errors.append(f"Type Error: Unable to copy '{file}' to '{file}.bak'")
 
-    if VERBOSE:
-        if len(errors) > 0:
-            for error in errors:
-                print(error)
+    verbose(copied, errors)
 
 
-def recursive(search_path: str, find_hidden=None) -> Generator[str, None, None]:
-    """recursively yield DirEntries"""
-    with os.scandir(search_path) as iterated:
-        for entry in iterated:
-            if not find_hidden and entry.name.startswith("."):
-                pass
-            else:
-                try:
-                    if entry.is_dir(follow_symlinks=False):
-                        yield from recursive(entry.path, HIDDEN)
-                    else:
-                        yield entry.path
-                except PermissionError:
-                    errors.append(f"Permission Denied: Unable to access '{entry}'")
+def verbose(files_copied: str, errors_thrown: str):
+    """print information on file copies and errors"""
+    if len(files_copied) > 0:
+        print("Copied:")
+        for file in files_copied:
+            print(file)
+    if len(errors_thrown) > 0:
+        print("Errors:")
+        for error in errors_thrown:
+            print(error)
 
 
 if __name__ == "__main__":
-    # TODO argument to give a file or list of files and back those up
-    # TODO make extension copying recursive
-    # TODO arg addition to recursive that allows for depth to recurse
+    # TODO option to provide files as arguments to backup
+    # TODO option for recursion depth specification
     # TODO option to find by file or dir
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser()
     main_args = parser.add_argument_group()
     matching_group = parser.add_mutually_exclusive_group()
 
@@ -198,7 +202,7 @@ if __name__ == "__main__":
         action="store_true",
     )
     main_args.add_argument(
-        "-v", "--verbose", help="print file file created", action="store_true"
+        "-v", "--verbose", help="explain what is being done", action="store_true"
     )
     parser.add_argument("--version", help="print version number", action="store_true")
 
@@ -218,7 +222,7 @@ if __name__ == "__main__":
 
     if args.version:
         print(f"mkbak.py {__version__}")
-        sys.exit(0)
+    else:
+        main()
 
-    main()
     sys.exit(0)
