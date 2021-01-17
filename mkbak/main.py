@@ -13,11 +13,12 @@ from typing import Generator, Optional
 from iterfzf import iterfzf
 
 
-__version__ = "v0.5.1"
+__version__ = "v0.6.0"
+errors: list = []
 # pylint: disable=fixme, unsubscriptable-object
 # TODO remove unsubscriptable-object once pylint updates (currently broken on typing,
 # see issue #3882)
-# TODO put iterators in a class
+# TODO condense iteration to one function
 
 
 def copy_all(file: str, location: str):
@@ -26,12 +27,13 @@ def copy_all(file: str, location: str):
     # copy content, stat-info, mode and timestamps
     try:
         shutil.copytree(file, location)
-    except NotADirectoryError:
-        shutil.copy2(file, location)
-    # copy owner and group
-    finally:
+        # copy owner and group
         owner_group = os.stat(file)
         os.chown(location, owner_group[stat.ST_UID], owner_group[stat.ST_GID])
+    except NotADirectoryError:
+        shutil.copy2(file, location)
+    except PermissionError:
+        errors.append(f"Permission Denied: Unable to access '{file}'")
 
 
 def iterate_files(
@@ -48,7 +50,9 @@ def iterate_files(
                         try:
                             yield entry.path
                         except PermissionError:
-                            pass
+                            errors.append(
+                                f"Permission Denied: Unable to access '{entry}'"
+                            )
         elif not file_ext:
             for entry in iterated:
                 if not find_hidden and entry.name.startswith("."):
@@ -57,62 +61,70 @@ def iterate_files(
                     try:
                         yield entry.path
                     except PermissionError:
-                        pass
+                        errors.append(f"Permission Denied: Unable to access '{entry}'")
 
 
 def main():
     """:"""
     # TODO is there a way to store options in a tuple and unload them into
     #      both functions?
+    # if the height option isn't present, fall back to the original 'iterfzf'
     try:
-        if no_recurse:
+        if NO_RECURSE:
             files = iterfzf(
-                iterable=(iterate_files(path, filetype, hidden)),
-                case_sensitive=ignore,
-                exact=exact,
+                iterable=(iterate_files(PATH, FILETYPE, HIDDEN)),
+                case_sensitive=IGNORE,
+                exact=EXACT,
                 encoding="utf-8",
                 height=HEIGHT,
-                preview=preview,
+                preview=PREVIEW,
                 multi=True,
             )
         else:
             files = iterfzf(
-                iterable=(recursive(path, hidden)),
-                case_sensitive=ignore,
-                exact=exact,
+                iterable=(recursive(PATH, HIDDEN)),
+                case_sensitive=IGNORE,
+                exact=EXACT,
                 encoding="utf-8",
                 height=HEIGHT,
-                preview=preview,
+                preview=PREVIEW,
                 multi=True,
             )
     except TypeError:
-        if no_recurse:
+        if NO_RECURSE:
             files = iterfzf(
-                iterable=(iterate_files(path, filetype, hidden)),
-                case_sensitive=ignore,
-                exact=exact,
+                iterable=(iterate_files(PATH, FILETYPE, HIDDEN)),
+                case_sensitive=IGNORE,
+                exact=EXACT,
                 encoding="utf-8",
-                preview=preview,
+                preview=PREVIEW,
                 multi=True,
             )
         else:
             files = iterfzf(
-                iterable=(recursive(path, hidden)),
-                case_sensitive=ignore,
-                exact=exact,
+                iterable=(recursive(PATH, HIDDEN)),
+                case_sensitive=IGNORE,
+                exact=EXACT,
                 encoding="utf-8",
-                preview=preview,
+                preview=PREVIEW,
                 multi=True,
             )
 
-    try:
+    if files:
         for file in files:
-            location = f"{file}.bak"
-            copy_all(file, location)
-            if verbose:
-                print(f"{file} -> {location}")
-    except TypeError:
-        pass
+            try:
+                location = f"{file}.bak"
+                copy_all(file, location)
+                # TODO only print this for files that got copied
+                if VERBOSE:
+                    print(f"{file} -> {location}")
+            except TypeError:
+                errors.append(f"Type Error: Unable to copy '{file}' to '{file}.bak'")
+
+    if VERBOSE:
+        if len(errors) > 0:
+            for error in errors:
+                print(error)
 
 
 def recursive(search_path: str, find_hidden=None) -> Generator[str, None, None]:
@@ -124,11 +136,11 @@ def recursive(search_path: str, find_hidden=None) -> Generator[str, None, None]:
             else:
                 try:
                     if entry.is_dir(follow_symlinks=False):
-                        yield from recursive(entry.path, hidden)
+                        yield from recursive(entry.path, HIDDEN)
                     else:
                         yield entry.path
                 except PermissionError:
-                    pass
+                    errors.append(f"Permission Denied: Unable to access '{entry}'")
 
 
 if __name__ == "__main__":
@@ -191,17 +203,17 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    exact: bool = args.exact
-    filetype: Optional[str] = args.filetype
+    EXACT: bool = args.exact
+    FILETYPE: Optional[str] = args.filetype
     # set height as a constant, using a oneliner if-else statement
     HEIGHT: str = str(args.height) + "%" if args.height in range(0, 101) else "100%"
-    hidden: bool = args.all
-    ignore: bool = args.ignore_case
+    HIDDEN: bool = args.all
+    IGNORE: bool = args.ignore_case
     # set the path as argument given, and expand '~' to "$HOME" if given
-    path: str = args.path if args.path[0] != "~" else Path(args.path).expanduser()
-    preview: Optional[str] = args.preview
-    no_recurse: bool = args.no_recurse
-    verbose: bool = args.verbose
+    PATH: str = args.path if args.path[0] != "~" else Path(args.path).expanduser()
+    PREVIEW: Optional[str] = args.preview
+    NO_RECURSE: bool = args.no_recurse
+    VERBOSE: bool = args.verbose
 
     if args.version:
         print(f"mkbak.py {__version__}")

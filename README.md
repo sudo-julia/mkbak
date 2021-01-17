@@ -10,6 +10,7 @@ Until recently (pre v0.5.0), `mkbak` was developed in my [`~/bin`](https://githu
   - A linux distribution to run the program on. I am considering developing a version for OSX and Windows as well.
 
 ## TODO
+- [ ] Create `__main__.py`
 - [ ] Write documentation
 - [ ] Make tests
 - [ ] Look into developing versions for BSD/OSX/Windows
