@@ -12,6 +12,9 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Generator
 from iterfzf import iterfzf
+from rich import box
+from rich.panel import Panel
+from rich import print as rprint
 
 
 # pylint: disable=fixme, unsubscriptable-object
@@ -19,7 +22,6 @@ from iterfzf import iterfzf
 # see issue #3882)
 
 __version__ = "v0.6.4"
-# TODO move copied and errors to a local scope
 copied: list[str] = []
 errors: list[str] = []
 
@@ -67,7 +69,7 @@ def main():
     """parse args and launch the whole thing"""
     # if the height option isn't present, fall back to the original 'iterfzf'
     try:
-        files = iterfzf(
+        files: list | None = iterfzf(
             iterable=(iterate_files(PATH, FILETYPE, HIDDEN)),
             case_sensitive=IGNORE,
             exact=EXACT,
@@ -77,7 +79,7 @@ def main():
             multi=True,
         )
     except TypeError:
-        files = iterfzf(
+        files: list | None = iterfzf(
             iterable=(iterate_files(PATH, FILETYPE, HIDDEN)),
             case_sensitive=IGNORE,
             exact=EXACT,
@@ -85,42 +87,58 @@ def main():
             preview=PREVIEW,
             multi=True,
         )
+    except PermissionError:
+        errors.append(f"PermissionError: Unable to access '{PATH}'")
+        verbose(copied, errors)
+        sys.exit(13)
 
     # if files exist, copy them. otherwise exit
     if files:
         for file in files:
             try:
                 location: str = f"{file}.bak"
-                success = copy_all(file, location)
+                success: bool = copy_all(file, location)
                 if VERBOSE and success:
                     copied.append(f"{file} -> {location}")
             except TypeError:
                 errors.append(f"Type Error: Unable to copy '{file}' to '{file}.bak'")
     else:
-        print("No files found.")
-        sys.exit(1)
+        sys.exit(130)
 
     verbose(copied, errors)
 
 
-def verbose(files_copied: str, errors_thrown: str):
+def verbose(files_copied: list[str], errors_thrown: list[str]):
     """print information on file copies and errors"""
     if len(files_copied) > 0:
-        print("Copied:")
-        for file in files_copied:
-            print(file)
+        files_copied = "\n".join(files_copied)
+        rprint(
+            Panel(
+                f"[green]{files_copied}",
+                title="Files Copied",
+                box=box.SQUARE,
+                expand=False,
+                highlight=True,
+            )
+        )
     if len(errors_thrown) > 0:
         if len(files_copied) > 0:
             print()
-        print("Errors:")
-        for error in errors_thrown:
-            print(error)
+        errors_thrown = "\n".join(errors_thrown)
+        rprint(
+            Panel(
+                f"[red]{errors_thrown}",
+                title="Errors",
+                box=box.SQUARE,
+                expand=False,
+                highlight=True,
+            )
+        )
 
 
 if __name__ == "__main__":
     # TODO option to provide files as arguments to backup
     # TODO option for recursion depth specification
-    # TODO option to find by file or dir
     parser = ArgumentParser()
     main_args = parser.add_argument_group()
     matching_group = parser.add_mutually_exclusive_group()
@@ -176,10 +194,14 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    if args.version:
+        print(f"mkbak.py {__version__=}")
+        sys.exit(0)
+
     EXACT: bool = args.exact
     FILETYPE: str | None = args.filetype
     # set height as a constant, using a oneliner if-else statement
-    HEIGHT: str = str(args.height) + "%" if args.height in range(0, 101) else "100%"
+    HEIGHT: str = f"{args.height}%" if args.height in range(0, 101) else "100%"
     HIDDEN: bool = args.all
     IGNORE: bool = args.ignore_case
     # set the path as argument given, and expand '~' to "$HOME" if given
@@ -188,9 +210,5 @@ if __name__ == "__main__":
     NO_RECURSE: bool = args.no_recurse
     VERBOSE: bool = args.verbose
 
-    if args.version:
-        print(f"mkbak.py {__version__}")
-    else:
-        main()
-
+    main()
     sys.exit(0)
