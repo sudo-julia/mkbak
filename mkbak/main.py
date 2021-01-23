@@ -3,13 +3,14 @@
 iterate through files, feed them to 'iterfzf' for selection
 and make backups of the chosen files
 """
+from __future__ import annotations
 import os
 import shutil
 import stat
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Generator, List, Optional
+from typing import Generator
 from iterfzf import iterfzf
 
 
@@ -19,12 +20,12 @@ from iterfzf import iterfzf
 
 __version__ = "v0.6.4"
 # TODO move copied and errors to a local scope
-copied: List[str] = []
-errors: List[str] = []
+copied: list[str] = []
+errors: list[str] = []
 
 
 def copy_all(file: str, location: str) -> bool:
-    """copy a file owner and group intact"""
+    """copy a file, leaving the owner and group intact"""
     # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
     # copy content, stat-info, mode and timestamps
     try:
@@ -42,9 +43,11 @@ def copy_all(file: str, location: str) -> bool:
 
 
 def iterate_files(
-    search_path: str, file_ext: Optional[str], find_hidden=False
+    search_path: str, file_ext: str | None, find_hidden=False
 ) -> Generator[str, None, None]:
-    """iterate through files as DirEntries to feed to fzf wrapper"""
+    """
+    iterate through files as DirEntries to feed to fzf wrapper - recursion optional
+    """
     with os.scandir(search_path) as iterated:
         for entry in iterated:
             try:
@@ -83,6 +86,7 @@ def main():
             multi=True,
         )
 
+    # if files exist, copy them. otherwise exit
     if files:
         for file in files:
             try:
@@ -92,6 +96,9 @@ def main():
                     copied.append(f"{file} -> {location}")
             except TypeError:
                 errors.append(f"Type Error: Unable to copy '{file}' to '{file}.bak'")
+    else:
+        print("No files found.")
+        sys.exit(1)
 
     verbose(copied, errors)
 
@@ -103,6 +110,8 @@ def verbose(files_copied: str, errors_thrown: str):
         for file in files_copied:
             print(file)
     if len(errors_thrown) > 0:
+        if len(files_copied) > 0:
+            print()
         print("Errors:")
         for error in errors_thrown:
             print(error)
@@ -168,14 +177,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     EXACT: bool = args.exact
-    FILETYPE: Optional[str] = args.filetype
+    FILETYPE: str | None = args.filetype
     # set height as a constant, using a oneliner if-else statement
     HEIGHT: str = str(args.height) + "%" if args.height in range(0, 101) else "100%"
     HIDDEN: bool = args.all
     IGNORE: bool = args.ignore_case
     # set the path as argument given, and expand '~' to "$HOME" if given
     PATH: str = args.path if args.path[0] != "~" else Path(args.path).expanduser()
-    PREVIEW: Optional[str] = args.preview
+    PREVIEW: str | None = args.preview
     NO_RECURSE: bool = args.no_recurse
     VERBOSE: bool = args.verbose
 
