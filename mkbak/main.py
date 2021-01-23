@@ -21,7 +21,7 @@ from rich import print as rprint
 # TODO remove unsubscriptable-object once pylint updates (currently broken on typing,
 # see issue #3882)
 
-__version__ = "v0.6.4"
+__version__ = "v0.7.0"
 copied: list[str] = []
 errors: list[str] = []
 

@@ -19,11 +19,8 @@ Until recently (pre v0.5.0), `mkbak` was developed in my [`~/bin`](https://githu
 
 ## TODO
 - [ ] Better "Usage" section
-- [ ] Create `__main__.py`
-- [ ] Write documentation
 - [ ] Make tests
 - [ ] Look into developing versions for OSX/Windows
-- [ ] Github actions for linting
 
 ## Bugs
 Open an issue or PR
