@@ -75,7 +75,11 @@ def main():
             exact=EXACT,
             encoding="utf-8",
             height=HEIGHT,
+            query=QUERY,
             preview=PREVIEW,
+            print_query=PRINT_QUERY,
+            prompt=PROMPT,
+            mouse=MOUSE,
             multi=True,
         )
     except TypeError:
@@ -84,7 +88,11 @@ def main():
             case_sensitive=IGNORE,
             exact=EXACT,
             encoding="utf-8",
+            query=QUERY,
             preview=PREVIEW,
+            print_query=PRINT_QUERY,
+            prompt=PROMPT,
+            mouse=MOUSE,
             multi=True,
         )
     except PermissionError:
@@ -163,17 +171,23 @@ if __name__ == "__main__":
                            int between 0-100.""",
         type=int,
     )
-    matching_group.add_argument(
+    main_args.add_argument(
         "-i",
         "--ignore_case",
         help="ignore case distinction.",
         action="store_true",
     )
+    main_args.add_argument("--no_mouse", help="disable mouse", action="store_false")
+    main_args.add_argument(
+        "--no_recurse",
+        help="run mkbak in the current dir only (no recursion)",
+        action="store_true",
+    )
     main_args.add_argument(
         "-p",
         "--path",
-        help="directory to iterate through (default './')",
         default=".",
+        help="directory to iterate through (default './')",
         type=str,
     )
     main_args.add_argument(
@@ -182,10 +196,20 @@ if __name__ == "__main__":
         help="starts external process with current line as arg.",
         type=str,
     )
+    # TODO when print_query is active, mkbak throws errors:
+    #      TypeError: Unable to copy 'None' to 'None.bak'
     main_args.add_argument(
-        "--no_recurse",
-        help="run mkbak in the current dir only (no recursion)",
-        action="store_true",
+        "--print_query", help="print query as the first line", action="store_true"
+    )
+    main_args.add_argument(
+        "--prompt", default="> ", help="input prompt (default: '> ')", type=str
+    )
+    matching_group.add_argument(
+        "-q",
+        "--query",
+        default="",
+        help="start the finder with the given query",
+        type=str,
     )
     main_args.add_argument(
         "-v", "--verbose", help="explain what is being done", action="store_true"
@@ -204,10 +228,14 @@ if __name__ == "__main__":
     HEIGHT: str = f"{args.height}%" if args.height in range(0, 101) else "100%"
     HIDDEN: bool = args.all
     IGNORE: bool = args.ignore_case
+    MOUSE: bool = args.no_mouse
+    NO_RECURSE: bool = args.no_recurse
     # set the path as argument given, and expand '~' to "$HOME" if given
     PATH: str = args.path if args.path[0] != "~" else Path(args.path).expanduser()
     PREVIEW: str | None = args.preview
-    NO_RECURSE: bool = args.no_recurse
+    PRINT_QUERY: bool = args.print_query
+    PROMPT: str = args.prompt
+    QUERY: str = args.query
     VERBOSE: bool = args.verbose
 
     main()
