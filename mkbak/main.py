@@ -176,7 +176,7 @@ if __name__ == "__main__":
         "-i",
         "--ignore_case",
         help="ignore case distinction",
-        action="store_true",
+        action="store_false",
     )
     main_args.add_argument(
         "--no_mouse", help="disable mouse interaction", action="store_false"
