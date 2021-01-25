@@ -5,4 +5,5 @@ build/
 dist/
 poetry.lock
 sudo_julia.egg-info
+tmpignore/
 *__pycache__*

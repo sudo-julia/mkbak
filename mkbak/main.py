@@ -21,7 +21,7 @@ from rich import print as rprint
 # TODO remove unsubscriptable-object once pylint updates (currently broken on typing,
 # see issue #3882)
 
-__version__ = "v0.7.0"
+__version__ = "v0.7.1"
 copied: list[str] = []
 errors: list[str] = []
 
@@ -100,9 +100,11 @@ def main():
         verbose(copied, errors)
         sys.exit(13)
 
-    # if files exist, copy them. otherwise exit
-    if files:
+    # if files exist, copy them
+    if files and files[0] != "":
         for file in files:
+            if file is None:  # this catches None being given as a file by --print_query
+                sys.exit(130)
             try:
                 location: str = f"{file}.bak"
                 success: bool = copy_all(file, location)
@@ -152,35 +154,36 @@ if __name__ == "__main__":
     matching_group = parser.add_mutually_exclusive_group()
 
     main_args.add_argument(
-        "-a", "--all", help="show hidden and 'dot' files.", action="store_true"
+        "-a", "--all", help="show hidden and 'dot' files", action="store_true"
     )
     matching_group.add_argument(
-        "-e", "--exact", help="exact matching.", action="store_true"
+        "-e", "--exact", help="exact matching", action="store_true"
     )
     matching_group.add_argument(
         "-f",
         "--filetype",
         default=None,
-        help="only find files of a provided extension. recursion not supported.",
+        help="find files of a provided extension",
         type=str,
     )
     main_args.add_argument(
         "--height",
         default=100,
-        help="""display fzf window with the given height. takes an
-                           int between 0-100.""",
+        help="display fzf window with the given height",
         type=int,
     )
     main_args.add_argument(
         "-i",
         "--ignore_case",
-        help="ignore case distinction.",
+        help="ignore case distinction",
         action="store_true",
     )
-    main_args.add_argument("--no_mouse", help="disable mouse", action="store_false")
+    main_args.add_argument(
+        "--no_mouse", help="disable mouse interaction", action="store_false"
+    )
     main_args.add_argument(
         "--no_recurse",
-        help="run mkbak in the current dir only (no recursion)",
+        help="run mkbak without recursing through subdirectories",
         action="store_true",
     )
     main_args.add_argument(
@@ -193,11 +196,9 @@ if __name__ == "__main__":
     main_args.add_argument(
         "--preview",
         default=None,
-        help="starts external process with current line as arg.",
+        help="starts external process with current line as arg",
         type=str,
     )
-    # TODO when print_query is active, mkbak throws errors:
-    #      TypeError: Unable to copy 'None' to 'None.bak'
     main_args.add_argument(
         "--print_query", help="print query as the first line", action="store_true"
     )
@@ -214,7 +215,9 @@ if __name__ == "__main__":
     main_args.add_argument(
         "-v", "--verbose", help="explain what is being done", action="store_true"
     )
-    parser.add_argument("--version", help="print version number", action="store_true")
+    parser.add_argument(
+        "--version", help="print version information", action="store_true"
+    )
 
     args = parser.parse_args()
 
