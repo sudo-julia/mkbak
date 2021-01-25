@@ -1,4 +1,8 @@
 .github
-poetry.lock
 *.pyc
+.python-version
+build/
+dist/
+poetry.lock
+sudo_julia.egg-info
 *__pycache__*

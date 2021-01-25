@@ -219,7 +219,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.version:
-        print(f"mkbak.py {__version__=}")
+        print(f"mkbak.py {__version__}")
         sys.exit(0)
 
     EXACT: bool = args.exact
