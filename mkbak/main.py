@@ -14,7 +14,7 @@ from typing import Generator
 from iterfzf import iterfzf
 from rich import box
 from rich.panel import Panel
-from rich import print as rprint
+from rich import print as rich_print
 
 
 # pylint: disable=fixme, unsubscriptable-object
@@ -67,9 +67,8 @@ def iterate_files(
 
 def main():
     """parse args and launch the whole thing"""
-    # if the height option isn't present, fall back to the original 'iterfzf'
     try:
-        files: list | None = iterfzf(
+        files: list[str] | None = iterfzf(
             iterable=(iterate_files(PATH, FILETYPE, HIDDEN)),
             case_sensitive=IGNORE,
             exact=EXACT,
@@ -82,8 +81,8 @@ def main():
             mouse=MOUSE,
             multi=True,
         )
-    except TypeError:
-        files: list | None = iterfzf(
+    except TypeError:  # if --height isn't present, fall back to stock iterfzf
+        files: list[str] | None = iterfzf(
             iterable=(iterate_files(PATH, FILETYPE, HIDDEN)),
             case_sensitive=IGNORE,
             exact=EXACT,
@@ -118,11 +117,11 @@ def main():
     verbose(copied, errors)
 
 
-def verbose(files_copied: list[str], errors_thrown: list[str]):
+def verbose(files_copied: list[str] | str, errors_thrown: list[str] | str):
     """print information on file copies and errors"""
     if len(files_copied) > 0:
         files_copied = "\n".join(files_copied)
-        rprint(
+        rich_print(
             Panel(
                 f"[green]{files_copied}",
                 title="Files Copied",
@@ -135,7 +134,7 @@ def verbose(files_copied: list[str], errors_thrown: list[str]):
         if len(files_copied) > 0:
             print()
         errors_thrown = "\n".join(errors_thrown)
-        rprint(
+        rich_print(
             Panel(
                 f"[red]{errors_thrown}",
                 title="Errors",
