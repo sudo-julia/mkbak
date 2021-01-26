@@ -21,7 +21,7 @@ from rich import print as rich_print
 # TODO remove unsubscriptable-object once pylint updates (currently broken on typing,
 # see issue #3882)
 
-__version__ = "v0.7.1"
+__version__ = "v1.0.0"
 copied: list[str] = []
 errors: list[str] = []
 
@@ -119,7 +119,7 @@ def main():
 
 def verbose(files_copied: list[str] | str, errors_thrown: list[str] | str):
     """print information on file copies and errors"""
-    if len(files_copied) > 0:
+    if files_copied:
         files_copied = "\n".join(files_copied)
         rich_print(
             Panel(
@@ -130,8 +130,8 @@ def verbose(files_copied: list[str] | str, errors_thrown: list[str] | str):
                 highlight=True,
             )
         )
-    if len(errors_thrown) > 0:
-        if len(files_copied) > 0:
+    if errors_thrown:
+        if files_copied:
             print()
         errors_thrown = "\n".join(errors_thrown)
         rich_print(
@@ -168,7 +168,10 @@ if __name__ == "__main__":
     main_args.add_argument(
         "--height",
         default=100,
-        help="display fzf window with the given height",
+        help="""
+        display fzf window with the given height
+        (requires the iterfzf fork at 'github.com/sudo-julia/iterfzf'
+        """,
         type=int,
     )
     main_args.add_argument(

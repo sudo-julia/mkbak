@@ -1,6 +1,6 @@
 # mkbak.py
-`mkbak` makes backups of files in a given directory
-Old changes can be found in my [`bin`](https://github.com/sudo-julia/bin) repo.
+`mkbak` makes backups of files in a given directory  
+old changes can be found in my [`bin`](https://github.com/sudo-julia/bin) repo.
 
 
 ## Usage

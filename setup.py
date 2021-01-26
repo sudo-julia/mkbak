@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="sudo-julia",
-    version="0.7.1",
+    version="1.0.0",
     author="Julia A M",
     author_email="jlearning@tuta.io",
     description="a commandline utility to create file backups",
@@ -15,7 +15,7 @@ setuptools.setup(
     url="https://github.com/sudo-julia/mkbak",
     packages=setuptools.find_packages(),
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: End Users/Desktop",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
