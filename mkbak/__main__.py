@@ -11,7 +11,7 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Generator
-from iterfzf import iterfzf
+from mkbak_iterfzf import iterfzf
 from rich import box
 from rich.panel import Panel
 from rich import print as rich_print
@@ -42,9 +42,7 @@ def copy_all(file: str, location: str) -> bool:
         return False
 
 
-def iterate_files(
-    search_path: str, file_ext: str | None, find_hidden=False
-) -> Generator[str, None, None]:
+def iterate_files(search_path: str, find_hidden=False) -> Generator[str, None, None]:
     """
     iterate through files as DirEntries to feed to fzf wrapper - recursion optional
     """
@@ -54,9 +52,7 @@ def iterate_files(
                 if not find_hidden and entry.name.startswith("."):
                     pass
                 elif not NO_RECURSE and entry.is_dir(follow_symlinks=False):
-                    yield from iterate_files(entry.path, FILETYPE, HIDDEN)
-                elif file_ext and not entry.name.endswith(file_ext):
-                    pass
+                    yield from iterate_files(entry.path, HIDDEN)
                 else:
                     yield entry.path
             except PermissionError:
@@ -67,24 +63,11 @@ def main():
     """parse args and launch the whole thing"""
     try:
         files: list[str] | None = iterfzf(
-            iterable=(iterate_files(PATH, FILETYPE, HIDDEN)),
+            iterable=(iterate_files(PATH, HIDDEN)),
             case_sensitive=IGNORE,
             exact=EXACT,
             encoding="utf-8",
             height=HEIGHT,
-            query=QUERY,
-            preview=PREVIEW,
-            print_query=PRINT_QUERY,
-            prompt=PROMPT,
-            mouse=MOUSE,
-            multi=True,
-        )
-    except TypeError:  # if --height isn't present, fall back to stock iterfzf
-        files: list[str] | None = iterfzf(
-            iterable=(iterate_files(PATH, FILETYPE, HIDDEN)),
-            case_sensitive=IGNORE,
-            exact=EXACT,
-            encoding="utf-8",
             query=QUERY,
             preview=PREVIEW,
             print_query=PRINT_QUERY,
@@ -146,6 +129,7 @@ def verbose(files_copied: list[str] | str, errors_thrown: list[str] | str):
 if __name__ == "__main__":
     # TODO option to provide files as arguments to backup
     # TODO option for recursion depth specification
+    # TODO option to delete .bak files
     parser = ArgumentParser()
     main_args = parser.add_argument_group()
     matching_group = parser.add_mutually_exclusive_group()
@@ -155,13 +139,6 @@ if __name__ == "__main__":
     )
     matching_group.add_argument(
         "-e", "--exact", help="exact matching", action="store_true"
-    )
-    matching_group.add_argument(
-        "-f",
-        "--filetype",
-        default=None,
-        help="find files of a provided extension",
-        type=str,
     )
     main_args.add_argument(
         "--height",
@@ -225,7 +202,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     EXACT: bool = args.exact
-    FILETYPE: str | None = args.filetype
     # set height as a constant, using a oneliner if-else statement
     HEIGHT: str = f"{args.height}%" if args.height in range(0, 101) else "100%"
     HIDDEN: bool = args.all

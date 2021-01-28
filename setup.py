@@ -1,11 +1,10 @@
-# pylint: disable=missing-module-docstring
-import setuptools
+from setuptools import setup, find_packages
 from mkbak import version
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-setuptools.setup(
+setup(
     name="mkbak",
     version=version,
     author="Julia A M",
@@ -14,7 +13,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/sudo-julia/mkbak",
-    packages=setuptools.find_packages(),
+    packages=find_packages(),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
@@ -29,8 +28,9 @@ setuptools.setup(
         "Topic :: Terminals",
     ],
     install_requires=[
-        "mkbak-iterfzf>=0.6.0",
+        "mkbak-iterfzf>=0.6.1",
         "rich>=9.8.2",
     ],
     python_requires=">=3.7",
+    entry_points={"console_scripts": ["mkbak = mkbak.__main__:main"]},
 )
