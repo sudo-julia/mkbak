@@ -15,13 +15,11 @@ from iterfzf import iterfzf
 from rich import box
 from rich.panel import Panel
 from rich import print as rich_print
+from mkbak import version
 
 
-# pylint: disable=fixme, unsubscriptable-object
-# TODO remove unsubscriptable-object once pylint updates (currently broken on typing,
-# see issue #3882)
+# pylint: disable=fixme
 
-__version__ = "v0.7.1"
 copied: list[str] = []
 errors: list[str] = []
 
@@ -119,7 +117,7 @@ def main():
 
 def verbose(files_copied: list[str] | str, errors_thrown: list[str] | str):
     """print information on file copies and errors"""
-    if len(files_copied) > 0:
+    if files_copied:
         files_copied = "\n".join(files_copied)
         rich_print(
             Panel(
@@ -130,8 +128,8 @@ def verbose(files_copied: list[str] | str, errors_thrown: list[str] | str):
                 highlight=True,
             )
         )
-    if len(errors_thrown) > 0:
-        if len(files_copied) > 0:
+    if errors_thrown:
+        if files_copied:
             print()
         errors_thrown = "\n".join(errors_thrown)
         rich_print(
@@ -168,7 +166,10 @@ if __name__ == "__main__":
     main_args.add_argument(
         "--height",
         default=100,
-        help="display fzf window with the given height",
+        help="""
+        display fzf window with the given height
+        (requires the iterfzf fork at 'github.com/sudo-julia/iterfzf'
+        """,
         type=int,
     )
     main_args.add_argument(
@@ -215,14 +216,13 @@ if __name__ == "__main__":
         "-v", "--verbose", help="explain what is being done", action="store_true"
     )
     parser.add_argument(
-        "--version", help="print version information", action="store_true"
+        "--version",
+        help="print version information",
+        version=f"mkbak.py {version}",
+        action="version",
     )
 
     args = parser.parse_args()
-
-    if args.version:
-        print(f"mkbak.py {__version__}")
-        sys.exit(0)
 
     EXACT: bool = args.exact
     FILETYPE: str | None = args.filetype
@@ -233,7 +233,7 @@ if __name__ == "__main__":
     MOUSE: bool = args.no_mouse
     NO_RECURSE: bool = args.no_recurse
     # set the path as argument given, and expand '~' to "$HOME" if given
-    PATH: str = args.path if args.path[0] != "~" else Path(args.path).expanduser()
+    PATH: str = args.path if args.path[0] != "~" else str(Path(args.path).expanduser())
     PREVIEW: str | None = args.preview
     PRINT_QUERY: bool = args.print_query
     PROMPT: str = args.prompt

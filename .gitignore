@@ -1,9 +1,10 @@
 .github
-*.pyc
+.mypy_cache/
 .python-version
 build/
 dist/
 poetry.lock
-sudo_julia.egg-info
+*.pyc
+mkbak.egg-info
 tmpignore/
 *__pycache__*
