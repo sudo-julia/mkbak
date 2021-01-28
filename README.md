@@ -15,6 +15,10 @@ from your current directory
   - You can alias this to make the process quicker: `alias mkbak='python3 -m mkbak'`
 - For all options, run `mkbak --help`
 
+Please note that the `--height` argument will be overridden if set to '100' and
+the environment variable `$FZF_DEFAULT_OPTS` contains `--height` set to something
+other than '100'
+
 ### Example
 
 - `python3 -m mkbak -vi --path "$folder" -q 'pdf$'`

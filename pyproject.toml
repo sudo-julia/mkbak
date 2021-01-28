@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "mkbak"
-version = "1.0.2"
+version = "1.0.3"
 description = "make backups of files in a given directory"
 authors = ["sudo-julia <jlearning@tuta.io>"]
 license = "GPL-3.0"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-mkbak-iterfzf = "^0.6.0"
+mkbak-iterfzf = "^0.6.1"
 rich = "^9.8.2"
 
 [tool.poetry.dev-dependencies]

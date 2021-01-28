@@ -24,6 +24,25 @@ copied: list[str] = []
 errors: list[str] = []
 
 
+def iterate_files(
+    search_path: str, recursion: bool, find_hidden: bool = False
+) -> Generator[str, None, None]:
+    """
+    iterate through files as DirEntries to feed to fzf wrapper
+    """
+    with os.scandir(search_path) as iterated:
+        for entry in iterated:
+            try:
+                if not find_hidden and entry.name.startswith("."):
+                    pass
+                elif recursion and entry.is_dir(follow_symlinks=False):
+                    yield from iterate_files(entry.path, recursion, find_hidden)
+                else:
+                    yield entry.path
+            except PermissionError:
+                errors.append(f"Permission Denied: Unable to access '{entry}'")
+
+
 def copy_all(file: str, location: str) -> bool:
     """copy a file, leaving the owner and group intact"""
     # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
@@ -42,94 +61,13 @@ def copy_all(file: str, location: str) -> bool:
         return False
 
 
-def iterate_files(search_path: str, find_hidden=False) -> Generator[str, None, None]:
-    """
-    iterate through files as DirEntries to feed to fzf wrapper - recursion optional
-    """
-    with os.scandir(search_path) as iterated:
-        for entry in iterated:
-            try:
-                if not find_hidden and entry.name.startswith("."):
-                    pass
-                elif not NO_RECURSE and entry.is_dir(follow_symlinks=False):
-                    yield from iterate_files(entry.path, HIDDEN)
-                else:
-                    yield entry.path
-            except PermissionError:
-                errors.append(f"Permission Denied: Unable to access '{entry}'")
-
-
 def main():
     """parse args and launch the whole thing"""
-    try:
-        files: list[str] | None = iterfzf(
-            iterable=(iterate_files(PATH, HIDDEN)),
-            case_sensitive=IGNORE,
-            exact=EXACT,
-            encoding="utf-8",
-            height=HEIGHT,
-            query=QUERY,
-            preview=PREVIEW,
-            print_query=PRINT_QUERY,
-            prompt=PROMPT,
-            mouse=MOUSE,
-            multi=True,
-        )
-    except PermissionError:
-        errors.append(f"PermissionError: Unable to access '{PATH}'")
-        verbose(copied, errors)
-        sys.exit(13)
-
-    # if files exist, copy them
-    if files and files[0] != "":
-        for file in files:
-            if file is None:  # this catches None being given as a file by --print_query
-                sys.exit(130)
-            try:
-                location: str = f"{file}.bak"
-                success: bool = copy_all(file, location)
-                if VERBOSE and success:
-                    copied.append(f"{file} -> {location}")
-            except TypeError:
-                errors.append(f"Type Error: Unable to copy '{file}' to '{file}.bak'")
-    else:
-        sys.exit(130)
-
-    verbose(copied, errors)
-
-
-def verbose(files_copied: list[str] | str, errors_thrown: list[str] | str):
-    """print information on file copies and errors"""
-    if files_copied:
-        files_copied = "\n".join(files_copied)
-        rich_print(
-            Panel(
-                f"[green]{files_copied}",
-                title="Files Copied",
-                box=box.SQUARE,
-                expand=False,
-                highlight=True,
-            )
-        )
-    if errors_thrown:
-        if files_copied:
-            print()
-        errors_thrown = "\n".join(errors_thrown)
-        rich_print(
-            Panel(
-                f"[red]{errors_thrown}",
-                title="Errors",
-                box=box.SQUARE,
-                expand=False,
-                highlight=True,
-            )
-        )
-
-
-if __name__ == "__main__":
     # TODO option to provide files as arguments to backup
     # TODO option for recursion depth specification
     # TODO option to delete .bak files
+
+    # TODO move these to a function that gets args for main
     parser = ArgumentParser()
     main_args = parser.add_argument_group()
     matching_group = parser.add_mutually_exclusive_group()
@@ -143,10 +81,7 @@ if __name__ == "__main__":
     main_args.add_argument(
         "--height",
         default=100,
-        help="""
-        display fzf window with the given height
-        (requires the iterfzf fork at 'github.com/sudo-julia/iterfzf'
-        """,
+        help="display fzf window with the given height",
         type=int,
     )
     main_args.add_argument(
@@ -159,15 +94,15 @@ if __name__ == "__main__":
         "--no_mouse", help="disable mouse interaction", action="store_false"
     )
     main_args.add_argument(
-        "--no_recurse",
+        "--no_recursion",
         help="run mkbak without recursing through subdirectories",
-        action="store_true",
+        action="store_false",
     )
     main_args.add_argument(
         "-p",
         "--path",
         default=".",
-        help="directory to iterate through (default './')",
+        help="directory to iterate through (default '.')",
         type=str,
     )
     main_args.add_argument(
@@ -201,20 +136,83 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    EXACT: bool = args.exact
+    exact: bool = args.exact
     # set height as a constant, using a oneliner if-else statement
-    HEIGHT: str = f"{args.height}%" if args.height in range(0, 101) else "100%"
-    HIDDEN: bool = args.all
-    IGNORE: bool = args.ignore_case
-    MOUSE: bool = args.no_mouse
-    NO_RECURSE: bool = args.no_recurse
+    height: str = f"{args.height}%" if args.height in range(0, 100) else "100%"
+    hidden: bool = args.all
+    ignore: bool = args.ignore_case
+    mouse: bool = args.no_mouse
+    recursion: bool = args.no_recursion
     # set the path as argument given, and expand '~' to "$HOME" if given
-    PATH: str = args.path if args.path[0] != "~" else str(Path(args.path).expanduser())
-    PREVIEW: str | None = args.preview
-    PRINT_QUERY: bool = args.print_query
-    PROMPT: str = args.prompt
-    QUERY: str = args.query
-    VERBOSE: bool = args.verbose
+    path: str = args.path if args.path[0] != "~" else str(Path(args.path).expanduser())
+    preview: str | None = args.preview
+    print_query: bool = args.print_query
+    prompt: str = args.prompt
+    query: str = args.query
+    verbose: bool = args.verbose
 
+    try:
+        files: list[str] | None = iterfzf(
+            iterable=(iterate_files(path, recursion, hidden)),
+            case_sensitive=ignore,
+            exact=exact,
+            encoding="utf-8",
+            height=height,
+            query=query,
+            preview=preview,
+            print_query=print_query,
+            prompt=prompt,
+            mouse=mouse,
+            multi=True,
+        )
+    except PermissionError:
+        errors.append(f"PermissionError: Unable to access '{path}'")
+        print_verbose(copied, errors)
+        sys.exit(13)
+
+    # if files exist, copy them
+    if files and files[0] != "":
+        for file in files:
+            if file is None:  # this catches None being given as a file by --print_query
+                sys.exit(130)
+            try:
+                location: str = f"{file}.bak"
+                success: bool = copy_all(file, location)
+                if verbose and success:
+                    copied.append(f"{file} -> {location}")
+            except TypeError:
+                errors.append(f"Type Error: Unable to copy '{file}' to '{file}.bak'")
+    else:
+        sys.exit(130)
+
+    print_verbose(copied, errors)
+    return 0
+
+
+def print_verbose(files_copied: list[str] | str, errors_thrown: list[str] | str):
+    """print information on file copies and errors"""
+    if files_copied:
+        files_copied = "\n".join(files_copied)
+        rich_print(
+            Panel.fit(
+                f"[green]{files_copied}",
+                title="Files Copied",
+                box=box.SQUARE,
+            )
+        )
+    if errors_thrown:
+        if files_copied:
+            print()
+        errors_thrown = "\n".join(errors_thrown)
+        rich_print(
+            Panel.fit(
+                f"[red]{errors_thrown}",
+                title="Errors",
+                box=box.SQUARE,
+            )
+        )
+
+
+if __name__ == "__main__":
     main()
     sys.exit(0)
