@@ -5,6 +5,6 @@ build/
 dist/
 poetry.lock
 *.pyc
-sudo_julia.egg-info
+mkbak.egg-info
 tmpignore/
 *__pycache__*

@@ -1,12 +1,13 @@
 # pylint: disable=missing-module-docstring
 import setuptools
+from mkbak import version
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="sudo-julia",
-    version="1.0.0",
+    name="mkbak",
+    version=version,
     author="Julia A M",
     author_email="jlearning@tuta.io",
     description="a commandline utility to create file backups",
@@ -28,7 +29,7 @@ setuptools.setup(
         "Topic :: Terminals",
     ],
     install_requires=[
-        "iterfzf>=0.5.0",
+        "mkbak-iterfzf>=0.6.0",
         "rich>=9.8.2",
     ],
     python_requires=">=3.7",
