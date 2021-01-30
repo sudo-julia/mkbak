@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mkbak"
-version = "1.0.3"
+version = "1.1.0"
 description = "make backups of files in a given directory"
 authors = ["sudo-julia <jlearning@tuta.io>"]
 license = "GPL-3.0"
@@ -18,7 +18,7 @@ pylint = "^2.6.0"
 
 [tool.black]
 line-length = 88
-target-version = ['py37', 'py38', 'py39']
+target-version = ['py37', 'py38']
 include = '\.pyi$'
 exclude = '''
 (

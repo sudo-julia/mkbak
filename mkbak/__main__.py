@@ -18,12 +18,12 @@ from rich import print as rich_print
 from mkbak import version
 
 
-# pylint: disable=fixme
-
 copied: list[str] = []
+deleted: list[str] = []
 errors: list[str] = []
 
 
+# TODO exit if no files are found (in instances with query and delete)
 def iterate_files(
     search_path: str, recursion: bool, find_hidden: bool = False
 ) -> Generator[str, None, None]:
@@ -39,6 +39,7 @@ def iterate_files(
                     yield from iterate_files(entry.path, recursion, find_hidden)
                 else:
                     yield entry.path
+            # TODO silence this if no files from the dir are copied(?)
             except PermissionError:
                 errors.append(f"Permission Denied: Unable to access '{entry}'")
 
@@ -57,17 +58,51 @@ def copy_all(file: str, location: str) -> bool:
         os.chown(location, owner_group[stat.ST_UID], owner_group[stat.ST_GID])
         return True
     except PermissionError:
-        errors.append(f"Permission Denied: Unable to access '{file}'")
+        errors.append(f"Permission Denied: Unable to back up '{file}'")
         return False
+
+
+def copy_all_2(files: list[str], verbosity: bool):
+    """copy a file, leaving the owner and group intact"""
+    # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
+    # copy content, stat-info, mode and timestamps
+    for file in files:
+        location: str = f"{file}.bak"
+        try:
+            if Path(file).is_dir():
+                shutil.copytree(file, location)
+            elif Path(file).is_file():
+                shutil.copy2(file, location)
+            # copy owner and group
+            owner_group = os.stat(file)
+            os.chown(location, owner_group[stat.ST_UID], owner_group[stat.ST_GID])
+            if verbosity:
+                copied.append(f"{file} -> {location}")
+        except PermissionError:
+            errors.append(f"Permission Denied: Unable to back up '{file}'")
+
+
+# TODO confirm option|option to confirm number of files to delete
+#      -- functionally similar to rm -i|-I
+def delete_backups(files: list[str], verbosity: bool):
+    """delete files"""
+    for file in files:
+        if file is None:
+            sys.exit(130)
+        try:
+            os.remove(file)
+            if verbosity:
+                deleted.append(file)
+        except PermissionError:
+            errors.append(f"Permission Denied: Unable to delete '{file}'")
+        except FileNotFoundError:
+            errors.append(f"File Not Found: '{file}' does not exist")
 
 
 def main():
     """parse args and launch the whole thing"""
     # TODO option to provide files as arguments to backup
     # TODO option for recursion depth specification
-    # TODO option to delete .bak files
-
-    # TODO move these to a function that gets args for main
     parser = ArgumentParser()
     main_args = parser.add_argument_group()
     matching_group = parser.add_mutually_exclusive_group()
@@ -76,8 +111,12 @@ def main():
         "-a", "--all", help="show hidden and 'dot' files", action="store_true"
     )
     matching_group.add_argument(
-        "-e", "--exact", help="exact matching", action="store_true"
+        "-d",
+        "--delete",
+        help="iterate through '.bak' files to delete",
+        action="store_true",
     )
+    main_args.add_argument("-e", "--exact", help="exact matching", action="store_true")
     main_args.add_argument(
         "--height",
         default=100,
@@ -136,6 +175,7 @@ def main():
 
     args = parser.parse_args()
 
+    delete: bool
     exact: bool = args.exact
     # set height as a constant, using a oneliner if-else statement
     height: str = f"{args.height}%" if args.height in range(0, 100) else "100%"
@@ -149,8 +189,17 @@ def main():
     print_query: bool = args.print_query
     prompt: str = args.prompt
     query: str = args.query
+    if args.delete:
+        delete = True
+        query = ".bak$"
+        print_query = False
+    else:
+        delete = False
     verbose: bool = args.verbose
+    print(f"{delete=}, {query=}, {print_query=}")
 
+    # TODO why does it print the query regardless of print_query :/
+    #      FIX BEFORE RELEASE
     try:
         files: list[str] | None = iterfzf(
             iterable=(iterate_files(path, recursion, hidden)),
@@ -167,11 +216,17 @@ def main():
         )
     except PermissionError:
         errors.append(f"PermissionError: Unable to access '{path}'")
-        print_verbose(copied, errors)
+        print_verbose(copied, deleted, errors)
         sys.exit(13)
 
+    # TODO structure delete and copy similarly
+    #      wind up with - if files and files[0] != ""
+    #                         if delete:
+    #                         else:
+    if delete and files and files[0] != "":
+        delete_backups(files, verbose)
     # if files exist, copy them
-    if files and files[0] != "":
+    elif files and files[0] != "":
         for file in files:
             if file is None:  # this catches None being given as a file by --print_query
                 sys.exit(130)
@@ -181,16 +236,21 @@ def main():
                 if verbose and success:
                     copied.append(f"{file} -> {location}")
             except TypeError:
-                errors.append(f"Type Error: Unable to copy '{file}' to '{file}.bak'")
+                errors.append(f"Type Error: Unable to back up '{file}' to '{file}.bak'")
     else:
         sys.exit(130)
 
-    print_verbose(copied, errors)
+    print_verbose(copied, deleted, errors)
     return 0
 
 
-def print_verbose(files_copied: list[str] | str, errors_thrown: list[str] | str):
+def print_verbose(
+    files_copied: list[str] | str,
+    files_deleted: list[str] | str,
+    errors_thrown: list[str] | str,
+):
     """print information on file copies and errors"""
+    # TODO make a class for the Panel if possible
     if files_copied:
         files_copied = "\n".join(files_copied)
         rich_print(
@@ -200,8 +260,21 @@ def print_verbose(files_copied: list[str] | str, errors_thrown: list[str] | str)
                 box=box.SQUARE,
             )
         )
+    if files_deleted:
+        if files_copied:
+            print()
+        files_deleted = "\n".join(files_deleted)
+        rich_print(
+            Panel(
+                "[dark_orange]{files_deleted}",
+                title="Files Deleted",
+                box=box.SQUARE,
+            )
+        )
     if errors_thrown:
         if files_copied:
+            print()
+        elif files_deleted:
             print()
         errors_thrown = "\n".join(errors_thrown)
         rich_print(

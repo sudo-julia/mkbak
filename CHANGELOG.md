@@ -3,6 +3,15 @@
 `mkbak` follows semantic versioning, with the exception of the jump between
 0.7.0 and 1.0.0
 
+## Version 1.1.0
+
+Released 2021-XX-XX
+
+- `-d|--delete` option added
+  - the `--delete` flag scans for '.bak' files in the current directory,
+and instead of backing them up again, deletes them
+- Errors are slightly more verbose
+
 ## Version 1.0.3
 
 Released 2021-01-28

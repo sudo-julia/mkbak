@@ -10,9 +10,8 @@ select what to back up.
 
 ## Usage
 
-- Run `python3 -m mkbak` to start recursively searching for files to backup
+- Run `mkbak` to start recursively searching for files to backup
 from your current directory
-  - You can alias this to make the process quicker: `alias mkbak='python3 -m mkbak'`
 - For all options, run `mkbak --help`
 
 Please note that the `--height` argument will be overridden if set to '100' and
@@ -21,7 +20,7 @@ other than '100'
 
 ### Example
 
-- `python3 -m mkbak -vi --path "$folder" -q 'pdf$'`
+- `mkbak -vi --path "$folder" -q 'pdf$'`
 will launch mkbak searching `$folder`
 , query files ending in 'pdf', ignore case distinctions in file names and
 print out any errors along with files successfully copied
@@ -41,9 +40,9 @@ Open an issue or PR
 ## ToDo
 
 - [X] Package for pypi
-- [ ] Rewrite README in .rst for rendering on PyPi
+- [X] Define entry point so the program can be run as `mkbak`
+- [ ] Shell completions
 - [ ] Add all options to README
-- [ ] Define entry point so the program can be run as `mkbak`
 
 ## Credits
 
