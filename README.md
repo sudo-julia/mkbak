@@ -18,7 +18,7 @@ Please note that the `--height` argument will be overridden if set to '100' and
 the environment variable `$FZF_DEFAULT_OPTS` contains `--height` set to something
 other than '100'
 
-### Example
+## Example
 
 - `mkbak -vi --path "$folder" -q 'pdf$'`
 will launch mkbak searching `$folder`
@@ -32,6 +32,10 @@ for the fzf interface
 - [rich](https://github.com/willmcgugan/rich) for formatting with `--verbose`
 - Python^3.7
 - Linux
+
+## Changelog
+
+See [CHANGELOG.md](https://github.com/sudo-julia/mkbak/blob/main/CHANGELOG.md)
 
 ## Bugs
 

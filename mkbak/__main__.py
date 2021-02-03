@@ -23,20 +23,25 @@ deleted: list[str] = []
 errors: list[str] = []
 
 
-# TODO exit if no files are found (in instances with query and delete)
 def iterate_files(
-    search_path: str, recursion: bool, find_hidden: bool = False
+    search_path: str, recursion: bool, delete: bool, find_hidden: bool = False
 ) -> Generator[str, None, None]:
     """
     iterate through files as DirEntries to feed to fzf wrapper
     """
+    # TODO condense this
     with os.scandir(search_path) as iterated:
         for entry in iterated:
             try:
-                if not find_hidden and entry.name.startswith("."):
+                if delete:
+                    if not find_hidden and entry.name.startswith("."):
+                        pass
+                    elif entry.name.endswith(".bak"):
+                        yield entry.path
+                elif not find_hidden and entry.name.startswith("."):
                     pass
                 elif recursion and entry.is_dir(follow_symlinks=False):
-                    yield from iterate_files(entry.path, recursion, find_hidden)
+                    yield from iterate_files(entry.path, recursion, delete, find_hidden)
                 else:
                     yield entry.path
             # TODO silence this if no files from the dir are copied(?)
@@ -44,42 +49,46 @@ def iterate_files(
                 errors.append(f"Permission Denied: Unable to access '{entry}'")
 
 
-def copy_all(file: str, location: str) -> bool:
+def copy_all(files: list[str], verbosity: bool):
     """copy a file, leaving the owner and group intact"""
     # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
     # copy content, stat-info, mode and timestamps
-    try:
-        if Path(file).is_dir():
-            shutil.copytree(file, location)
-        elif Path(file).is_file():
-            shutil.copy2(file, location)
-        # copy owner and group
-        owner_group = os.stat(file)
-        os.chown(location, owner_group[stat.ST_UID], owner_group[stat.ST_GID])
-        return True
-    except PermissionError:
-        errors.append(f"Permission Denied: Unable to back up '{file}'")
-        return False
-
-
-def copy_all_2(files: list[str], verbosity: bool):
-    """copy a file, leaving the owner and group intact"""
-    # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
-    # copy content, stat-info, mode and timestamps
+    # TODO integrate '.bak' files being overwritten, currently copy2 throws
+    # SameFileError
     for file in files:
-        location: str = f"{file}.bak"
+        if file is None:
+            sys.exit(130)
+        elif file.endswith(".bak"):
+            location: str = file
+            is_bak: bool = True
+        else:
+            location = f"{file}.bak"
+            is_bak = False
         try:
-            if Path(file).is_dir():
-                shutil.copytree(file, location)
-            elif Path(file).is_file():
-                shutil.copy2(file, location)
+            shutil.copy2(file, location)
             # copy owner and group
             owner_group = os.stat(file)
             os.chown(location, owner_group[stat.ST_UID], owner_group[stat.ST_GID])
-            if verbosity:
-                copied.append(f"{file} -> {location}")
+            copy_success: bool = True
         except PermissionError:
             errors.append(f"Permission Denied: Unable to back up '{file}'")
+            copy_success: bool = False
+        finally:
+            if copy_success and verbosity:
+                if is_bak:
+                    copied.append(f"Overwrote '{file}' in place")
+                else:
+                    copied.append(f"{file} -> {location}")
+
+
+def overwrite_file(file: str):
+    """create a temporary directory, copy"""
+    # TODO create a tmp folder to perform operations in, then remove folder
+    """
+    check if file exists,
+    copy 'foo.bak' to 'foo.bak.tmp',
+    once copied, move 'foo.bak.tmp' to 'foo.bak'
+    """
 
 
 # TODO confirm option|option to confirm number of files to delete
@@ -92,7 +101,7 @@ def delete_backups(files: list[str], verbosity: bool):
         try:
             os.remove(file)
             if verbosity:
-                deleted.append(file)
+                deleted.append(f"'{file}'")
         except PermissionError:
             errors.append(f"Permission Denied: Unable to delete '{file}'")
         except FileNotFoundError:
@@ -187,22 +196,15 @@ def main():
     path: str = args.path if args.path[0] != "~" else str(Path(args.path).expanduser())
     preview: str | None = args.preview
     print_query: bool = args.print_query
-    prompt: str = args.prompt
+    # set prompt to default unless in 'delete' mode
+    prompt: str = args.prompt if not args.delete else "rm > "
     query: str = args.query
-    if args.delete:
-        delete = True
-        query = ".bak$"
-        print_query = False
-    else:
-        delete = False
+    delete: bool = args.delete
     verbose: bool = args.verbose
-    print(f"{delete=}, {query=}, {print_query=}")
 
-    # TODO why does it print the query regardless of print_query :/
-    #      FIX BEFORE RELEASE
     try:
         files: list[str] | None = iterfzf(
-            iterable=(iterate_files(path, recursion, hidden)),
+            iterable=(iterate_files(path, recursion, delete, hidden)),
             case_sensitive=ignore,
             exact=exact,
             encoding="utf-8",
@@ -227,16 +229,7 @@ def main():
         delete_backups(files, verbose)
     # if files exist, copy them
     elif files and files[0] != "":
-        for file in files:
-            if file is None:  # this catches None being given as a file by --print_query
-                sys.exit(130)
-            try:
-                location: str = f"{file}.bak"
-                success: bool = copy_all(file, location)
-                if verbose and success:
-                    copied.append(f"{file} -> {location}")
-            except TypeError:
-                errors.append(f"Type Error: Unable to back up '{file}' to '{file}.bak'")
+        copy_all(files, verbose)
     else:
         sys.exit(130)
 
@@ -250,7 +243,6 @@ def print_verbose(
     errors_thrown: list[str] | str,
 ):
     """print information on file copies and errors"""
-    # TODO make a class for the Panel if possible
     if files_copied:
         files_copied = "\n".join(files_copied)
         rich_print(
@@ -265,16 +257,14 @@ def print_verbose(
             print()
         files_deleted = "\n".join(files_deleted)
         rich_print(
-            Panel(
-                "[dark_orange]{files_deleted}",
+            Panel.fit(
+                f"[dark_orange]{files_deleted}",
                 title="Files Deleted",
                 box=box.SQUARE,
             )
         )
     if errors_thrown:
-        if files_copied:
-            print()
-        elif files_deleted:
+        if files_copied or files_deleted:
             print()
         errors_thrown = "\n".join(errors_thrown)
         rich_print(

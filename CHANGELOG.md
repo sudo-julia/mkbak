@@ -10,6 +10,10 @@ Released 2021-XX-XX
 - `-d|--delete` option added
   - the `--delete` flag scans for '.bak' files in the current directory,
 and instead of backing them up again, deletes them
+- default prompts changed for 'backup' and 'remove modes'
+  - passing a `--prompt` argument will override the default
+- Existing '.bak' files are overwritten in place instead of
+creating a '.bak.bak' extension
 - Errors are slightly more verbose
 
 ## Version 1.0.3
