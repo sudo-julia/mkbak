@@ -27,24 +27,23 @@ def iterate_files(
     search_path: str, recursion: bool, delete: bool, find_hidden: bool = False
 ) -> Generator[str, None, None]:
     """
-    iterate through files as DirEntries to feed to fzf wrapper
+    iterate through files to provide to iterfzf
     """
-    # TODO condense this
     with os.scandir(search_path) as iterated:
         for entry in iterated:
             try:
-                if delete:
-                    if not find_hidden and entry.name.startswith("."):
-                        pass
-                    elif entry.name.endswith(".bak"):
-                        yield entry.path
-                elif not find_hidden and entry.name.startswith("."):
+                if not find_hidden and entry.name.startswith("."):  # pass hidden files
+                    pass
+                elif delete and entry.name.endswith(".bak"):
+                    yield entry.path
+                elif delete:
+                    pass
+                elif entry.name.endswith(".bak"):  # pass existing backup files
                     pass
                 elif recursion and entry.is_dir(follow_symlinks=False):
                     yield from iterate_files(entry.path, recursion, delete, find_hidden)
                 else:
                     yield entry.path
-            # TODO silence this if no files from the dir are copied(?)
             except PermissionError:
                 errors.append(f"Permission Denied: Unable to access '{entry}'")
 
@@ -53,17 +52,13 @@ def copy_all(files: list[str], verbosity: bool):
     """copy a file, leaving the owner and group intact"""
     # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
     # copy content, stat-info, mode and timestamps
-    # TODO integrate '.bak' files being overwritten, currently copy2 throws
+    # TODO check if backup has the same modification time as the original before copying
     # SameFileError
     for file in files:
         if file is None:
             sys.exit(130)
-        elif file.endswith(".bak"):
-            location: str = file
-            is_bak: bool = True
-        else:
-            location = f"{file}.bak"
-            is_bak = False
+
+        location = f"{file}.bak"
         try:
             shutil.copy2(file, location)
             # copy owner and group
@@ -72,23 +67,10 @@ def copy_all(files: list[str], verbosity: bool):
             copy_success: bool = True
         except PermissionError:
             errors.append(f"Permission Denied: Unable to back up '{file}'")
-            copy_success: bool = False
+            copy_success = False
         finally:
             if copy_success and verbosity:
-                if is_bak:
-                    copied.append(f"Overwrote '{file}' in place")
-                else:
-                    copied.append(f"{file} -> {location}")
-
-
-def overwrite_file(file: str):
-    """create a temporary directory, copy"""
-    # TODO create a tmp folder to perform operations in, then remove folder
-    """
-    check if file exists,
-    copy 'foo.bak' to 'foo.bak.tmp',
-    once copied, move 'foo.bak.tmp' to 'foo.bak'
-    """
+                copied.append(f"{file} -> {location}")
 
 
 # TODO confirm option|option to confirm number of files to delete
@@ -221,10 +203,6 @@ def main():
         print_verbose(copied, deleted, errors)
         sys.exit(13)
 
-    # TODO structure delete and copy similarly
-    #      wind up with - if files and files[0] != ""
-    #                         if delete:
-    #                         else:
     if delete and files and files[0] != "":
         delete_backups(files, verbose)
     # if files exist, copy them

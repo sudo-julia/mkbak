@@ -12,8 +12,8 @@ Released 2021-XX-XX
 and instead of backing them up again, deletes them
 - default prompts changed for 'backup' and 'remove modes'
   - passing a `--prompt` argument will override the default
-- Existing '.bak' files are overwritten in place instead of
-creating a '.bak.bak' extension
+- '.bak' files are now passed over during iteration, removing the possibility of
+creating '.bak.bak.bak...' files
 - Errors are slightly more verbose
 
 ## Version 1.0.3
