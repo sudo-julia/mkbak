@@ -4,6 +4,7 @@ iterate through files, feed them to 'iterfzf' for selection
 and make backups of the chosen files
 """
 from __future__ import annotations
+import filecmp
 import os
 import shutil
 import stat
@@ -53,13 +54,18 @@ def copy_all(files: list[str], verbosity: bool):
     """copy a file, leaving the owner and group intact"""
     # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
     # copy content, stat-info, mode and timestamps
-    # TODO check if backup has the same modification time as the original before copying
+    # TODO check if user wants to overwrite location if the file is newer
     # SameFileError
     for file in files:
         if file is None:
             sys.exit(130)
 
         location = f"{file}.bak"
+        if Path(location).exists() and filecmp.cmp(file, location, shallow=True):
+            print("made it here")
+            copied.append(f"{location} is already up to date.")
+            continue
+
         try:
             shutil.copy2(file, location)
             # copy owner and group
@@ -256,5 +262,8 @@ def print_verbose(
 
 
 if __name__ == "__main__":
+    if not sys.version_info > (3, 7):
+        print("mkbak requires Python 3.7 or higher")
+        sys.exit(1)
     main()
     sys.exit(0)

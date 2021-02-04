@@ -74,8 +74,8 @@ Open an issue or PR
 
 - [X] Package for pypi
 - [X] Define entry point so the program can be run as `mkbak`
+- [X] Add all options to README
 - [ ] Shell completions
-- [ ] Add all options to README
 
 ## Credits
 

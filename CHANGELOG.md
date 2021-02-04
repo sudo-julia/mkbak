@@ -3,11 +3,19 @@
 `mkbak` follows semantic versioning, with the exception of the jump between
 0.7.0 and 1.0.0
 
+## Version 1.1.2
+
+Released 2021-XX-XX
+
+- if `foo.bak` already exists, `mkbak` will check if `foo` and `foo.bak`
+are identical before making the backup, saving time copying files that are
+already up to date
+
 ## Version 1.1.1
 
 Released 2021-02-03
 
-- `--delete` not recursing properly fixed
+- `--delete` option now acts recursively
 
 ## Version 1.1.0
 
