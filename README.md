@@ -12,20 +12,42 @@ select what to back up.
 
 ### Building from source
 
-- `python3 setup.py sdist bdist_wheel`
-- `pip install --user -U .`
+- Download the repository:
+  - `git clone https://github.com/sudo-julia/mkbak`
+- Enter the repo
+  - `cd mkbak`
+- Build the package
+  - `python3 setup.py sdist bdist_wheel`
+- Install from the local build
+  - `pip install --user -U .`
 
 ## Usage
 
-- Run `mkbak` to start recursively searching for files to backup
+- Run `mkbak [options]` to start searching for files to backup
 from your current directory
-- For all options, run `mkbak --help`
 
-Please note that the `--height` argument will be overridden if set to '100' and
+### Arguments
+
+- `-h|--help` display all options
+- `--version`             print version information
+- `-d, --delete`          iterate through '.bak' files to delete
+- `-q [QUERY], --query [QUERY]` start the finder with the given query
+- `-a, --all`             show hidden and 'dot' files
+- `-e, --exact`           exact matching
+- `--height [HEIGHT]`       display fzf window with the given height
+  - Please note that the `--height` argument will be overridden if set to '100' and
 the environment variable `$FZF_DEFAULT_OPTS` contains `--height` set to something
 other than '100'
+- `-i, --ignore_case`     ignore case distinction
+- `--no_mouse`            disable mouse interaction
+- `--no_recursion`        run mkbak without recursing through subdirectories
+- `-p [PATH], --path [PATH]`  directory to iterate through (default '.')
+- `--preview [PREVIEW]`     starts external process with current line as arg
+- `--print_query`         print query as the first line
+- `--prompt [PROMPT]`       input prompt (default: '> ')
+- `-v, --verbose`         explain what is being done
 
-## Example
+### Example
 
 - `mkbak -vi --path "$folder" -q 'pdf$'`
 will launch mkbak searching `$folder`
