@@ -3,9 +3,15 @@
 `mkbak` follows semantic versioning, with the exception of the jump between
 0.7.0 and 1.0.0
 
+## Version 1.1.1
+
+Released 2021-02-03
+
+- `--delete` not recursing properly fixed
+
 ## Version 1.1.0
 
-Released 2021-XX-XX
+Released 2021-02-03
 
 - `-d|--delete` option added
   - the `--delete` flag scans for '.bak' files in the current directory,

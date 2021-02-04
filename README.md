@@ -6,7 +6,14 @@ select what to back up.
 
 ## Installation
 
-`pip install --user -U mkbak`
+### With Pip
+
+- `pip install --user -U mkbak`
+
+### Building from source
+
+- `python3 setup.py sdist bdist_wheel`
+- `pip install --user -U .`
 
 ## Usage
 

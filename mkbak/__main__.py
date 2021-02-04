@@ -34,14 +34,15 @@ def iterate_files(
             try:
                 if not find_hidden and entry.name.startswith("."):  # pass hidden files
                     pass
-                elif delete and entry.name.endswith(".bak"):
-                    yield entry.path
-                elif delete:
-                    pass
-                elif entry.name.endswith(".bak"):  # pass existing backup files
-                    pass
                 elif recursion and entry.is_dir(follow_symlinks=False):
                     yield from iterate_files(entry.path, recursion, delete, find_hidden)
+                elif entry.name.endswith(".bak"):
+                    if delete:
+                        yield entry.path
+                    else:
+                        pass
+                elif delete:
+                    pass
                 else:
                     yield entry.path
             except PermissionError:
