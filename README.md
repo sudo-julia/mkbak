@@ -1,8 +1,8 @@
 # mkbak.py
 
-`mkbak` is a commandline utility to find files and create backups accordingly.  
-It interfaces with `fzf` when finding the files, allowing you to interactively
-select what to back up.
+`mkbak` is a commandline utility to painlessly create file backups.  
+It interfaces with `fzf` as a menu for file selection, allowing you to
+interactively choose which files to back up.
 
 ## Installation
 
@@ -31,6 +31,8 @@ from your current directory
 - `-h|--help` display all options
 - `--version`             print version information
 - `-d, --delete`          iterate through '.bak' files to delete
+  - please note that this search can take a while, as it's only returning
+'.bak' files
 - `-q [QUERY], --query [QUERY]` start the finder with the given query
 - `-a, --all`             show hidden and 'dot' files
 - `-e, --exact`           exact matching

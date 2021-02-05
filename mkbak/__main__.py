@@ -54,17 +54,19 @@ def copy_all(files: list[str], verbosity: bool):
     """copy a file, leaving the owner and group intact"""
     # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
     # copy content, stat-info, mode and timestamps
-    # TODO check if user wants to overwrite location if the file is newer
-    # SameFileError
+    # TODO check if user wants to overwrite location if the backup location is newer
     for file in files:
         if file is None:
             sys.exit(130)
 
         location = f"{file}.bak"
-        if Path(location).exists() and filecmp.cmp(file, location, shallow=True):
-            print("made it here")
-            copied.append(f"{location} is already up to date.")
-            continue
+        if Path(location).exists():
+            if filecmp.cmp(file, location, shallow=True):
+                copied.append(f"{location} is already up to date.")
+                continue
+            elif Path(location).stat().st_mtime > Path(file).stat().st_mtime:
+                # TODO finish this
+                input(f"'{location}' is newer than '{file}'. Copy anyway? ")
 
         try:
             shutil.copy2(file, location)
@@ -101,6 +103,7 @@ def main():
     """parse args and launch the whole thing"""
     # TODO option to provide files as arguments to backup
     # TODO option for recursion depth specification
+    # TODO option to unbak a file (replace original with backup)
     parser = ArgumentParser()
     main_args = parser.add_argument_group()
     matching_group = parser.add_mutually_exclusive_group()
@@ -121,11 +124,12 @@ def main():
         help="display fzf window with the given height",
         type=int,
     )
+    # TODO fix this to correspond with iterfzf's handling
     main_args.add_argument(
         "-i",
         "--ignore_case",
         help="ignore case distinction",
-        action="store_false",
+        action="store_true",
     )
     main_args.add_argument(
         "--no_mouse", help="disable mouse interaction", action="store_false"
@@ -178,7 +182,7 @@ def main():
     # set height as a constant, using a oneliner if-else statement
     height: str = f"{args.height}%" if args.height in range(0, 100) else "100%"
     hidden: bool = args.all
-    ignore: bool = args.ignore_case
+    ignore: bool | None = False if args.ignore_case else None
     mouse: bool = args.no_mouse
     recursion: bool = args.no_recursion
     # set the path as argument given, and expand '~' to "$HOME" if given
@@ -190,6 +194,7 @@ def main():
     query: str = args.query
     delete: bool = args.delete
     verbose: bool = args.verbose
+    print(f"{ignore=}")
 
     try:
         files: list[str] | None = iterfzf(
@@ -237,9 +242,7 @@ def print_verbose(
                 box=box.SQUARE,
             )
         )
-    if files_deleted:
-        if files_copied:
-            print()
+    elif files_deleted:
         files_deleted = "\n".join(files_deleted)
         rich_print(
             Panel.fit(

@@ -11,6 +11,9 @@ Released 2021-XX-XX
 are identical before making the backup, saving time copying files that are
 already up to date
 
+- smart case matching is now the default. `-i|--ignore_case` still provides
+fully case-insensitive matching
+
 ## Version 1.1.1
 
 Released 2021-02-03
