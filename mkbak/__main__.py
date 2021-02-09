@@ -124,6 +124,16 @@ def main():
     main_args.add_argument(
         "-a", "--all", help="show hidden and 'dot' files", action="store_true"
     )
+    main_args.add_argument(
+        "--ansi",
+        help="enable processing of ANSI color codes",
+        action="store_true",
+    )
+    main_args.add_argument(
+        "--bind",
+        help="custom keybindings. refer to fzf's manpage",
+        type=str,
+    )
     matching_group.add_argument(
         "-d",
         "--delete",
@@ -133,7 +143,6 @@ def main():
     main_args.add_argument("-e", "--exact", help="exact matching", action="store_true")
     main_args.add_argument(
         "--height",
-        default=100,
         help="display fzf window with the given height",
         type=int,
     )
@@ -150,6 +159,16 @@ def main():
         "--no_recursion",
         help="run mkbak without recursing through subdirectories",
         action="store_false",
+    )
+    main_args.add_argument(
+        "--no_sort",
+        help="do not sort the results",
+        action="store_true",
+    )
+    main_args.add_argument(
+        "--padding",
+        help="padding inside the menu's border",
+        type=int,
     )
     main_args.add_argument(
         "-p",
@@ -189,16 +208,18 @@ def main():
 
     args = parser.parse_args()
 
-    delete: bool
+    ansi: bool = args.ansi
+    bind: str | None = args.bind
+    delete: bool = args.delete
     exact: bool = args.exact
     # set height as a constant, using a oneliner if-else statement
-    height: str = f"{args.height}%" if args.height in range(0, 100) else "100%"
+    height: str | None = f"{args.height}%" if args.height in range(0, 100) else None
     hidden: bool = args.all
     # set the case-sensitive option in accordance to iterfzf's options
     # (None for smartcase, False for case-insensitivity
     ignore: bool | None = False if args.ignore_case else None
     mouse: bool = args.no_mouse
-    recursion: bool = args.no_recursion
+    padding: str | None = f"{args.padding}%" if args.padding in range(0, 50) else None
     # set the path as argument given, and expand '~' to "$HOME" if given
     path: str = args.path if args.path[0] != "~" else str(Path(args.path).expanduser())
     preview: str | None = args.preview
@@ -206,20 +227,25 @@ def main():
     # set prompt to default unless in 'delete' mode
     prompt: str = args.prompt if not args.delete else "rm > "
     query: str = args.query
-    delete: bool = args.delete
+    recursion: bool = args.no_recursion
+    sort: bool = args.no_sort
     verbose: bool = args.verbose
 
     try:
         files: list[str] | None = iterfzf(
             iterable=(iterate_files(path, recursion, delete, hidden)),
+            ansi=ansi,
+            bind=bind,
             case_sensitive=ignore,
             exact=exact,
             encoding="utf-8",
             height=height,
             query=query,
+            padding=padding,
             preview=preview,
             print_query=print_query,
             prompt=prompt,
+            no_sort=sort,
             mouse=mouse,
             multi=True,
         )

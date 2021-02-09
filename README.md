@@ -1,5 +1,7 @@
 # mkbak.py
 
+[![PyPI version](https://badge.fury.io/py/mkbak.svg)](https://badge.fury.io/py/mkbak)
+
 `mkbak` is a commandline utility to painlessly create file backups.  
 It interfaces with `fzf` as a menu for file selection, allowing you to
 interactively choose which files to back up.

@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 1.2.0
+
+Released 2021-02-09
+
+- `mkbak_iterfzf` version upgrade
+- `ansi` option added
+- `bind` option added
+- `no_sort` option added
+- `padding` option added
+
 ## Version 1.1.2
 
 Released 2021-02-08

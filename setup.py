@@ -28,7 +28,7 @@ setup(
         "Topic :: Terminals",
     ],
     install_requires=[
-        "mkbak-iterfzf>=0.6.1",
+        "mkbak-iterfzf>=0.7",
         "rich>=9.8.2",
     ],
     python_requires=">=3.7",
