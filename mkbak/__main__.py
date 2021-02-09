@@ -54,19 +54,28 @@ def copy_all(files: list[str], verbosity: bool):
     """copy a file, leaving the owner and group intact"""
     # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
     # copy content, stat-info, mode and timestamps
-    # TODO check if user wants to overwrite location if the backup location is newer
     for file in files:
         if file is None:
             sys.exit(130)
 
         location = f"{file}.bak"
+        # operations for if the backup file already exists
         if Path(location).exists():
+            # if the files are the same, do not copy
             if filecmp.cmp(file, location, shallow=True):
                 copied.append(f"{location} is already up to date.")
                 continue
-            elif Path(location).stat().st_mtime > Path(file).stat().st_mtime:
-                # TODO finish this
-                input(f"'{location}' is newer than '{file}'. Copy anyway? ")
+            # if the location to copy to has been modified more recently than the
+            # original file, give the option to overwrite it
+            if Path(location).stat().st_mtime > Path(file).stat().st_mtime:
+                overwrite = input(
+                    f" '{location}' exists/is newer than '{file}'. Copy anyway?  [Y/n] "
+                )
+                if overwrite.casefold() == "y":
+                    print(f"Overwriting '{location}' with '{file}'.\n")
+                else:
+                    print(f"Leaving '{location}' as is.\n")
+                    continue
 
         try:
             shutil.copy2(file, location)
@@ -77,9 +86,8 @@ def copy_all(files: list[str], verbosity: bool):
         except PermissionError:
             errors.append(f"Permission Denied: Unable to back up '{file}'")
             copy_success = False
-        finally:
-            if copy_success and verbosity:
-                copied.append(f"{file} -> {location}")
+        if copy_success and verbosity:
+            copied.append(f"{file} -> {location}")
 
 
 # TODO confirm option|option to confirm number of files to delete
