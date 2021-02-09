@@ -23,6 +23,7 @@ from mkbak import version
 copied: list[str] = []
 deleted: list[str] = []
 errors: list[str] = []
+warnings: list[str] = []
 
 
 def iterate_files(
@@ -53,6 +54,8 @@ def copy_all(files: list[str], verbosity: bool):
     """copy a file, leaving the owner and group intact"""
     # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
     # copy content, stat-info, mode and timestamps
+    copy_success: bool
+
     for file in files:
         if file is None:
             sys.exit(130)
@@ -71,7 +74,7 @@ def copy_all(files: list[str], verbosity: bool):
                     f"'{location}' exists/is newer than '{file}'. Copy anyway? ",
                 )
                 if not overwrite:
-                    errors.append(f"'{location}' left as is")
+                    warnings.append(f"'{location}' not overwritten")
                     continue
 
         try:
@@ -79,7 +82,7 @@ def copy_all(files: list[str], verbosity: bool):
             # copy owner and group
             owner_group = os.stat(file)
             os.chown(location, owner_group[stat.ST_UID], owner_group[stat.ST_GID])
-            copy_success: bool = True
+            copy_success = True
         except PermissionError:
             errors.append(f"Permission Denied: Unable to back up '{file}'")
             copy_success = False
@@ -129,7 +132,6 @@ def main():
         help="display fzf window with the given height",
         type=int,
     )
-    # TODO fix this to correspond with iterfzf's handling
     main_args.add_argument(
         "-i",
         "--ignore_case",
@@ -187,6 +189,8 @@ def main():
     # set height as a constant, using a oneliner if-else statement
     height: str = f"{args.height}%" if args.height in range(0, 100) else "100%"
     hidden: bool = args.all
+    # set the case-sensitive option in accordance to iterfzf's options
+    # (None for smartcase, False for case-insensitivity
     ignore: bool | None = False if args.ignore_case else None
     mouse: bool = args.no_mouse
     recursion: bool = args.no_recursion
@@ -216,7 +220,7 @@ def main():
         )
     except PermissionError:
         errors.append(f"PermissionError: Unable to access '{path}'")
-        print_verbose(copied, deleted, errors)
+        print_verbose(copied, deleted, errors, warnings)
         sys.exit(13)
 
     if delete and files and files[0] != "":
@@ -227,7 +231,7 @@ def main():
     else:
         sys.exit(130)
 
-    print_verbose(copied, deleted, errors)
+    print_verbose(copied, deleted, errors, warnings)
     return 0
 
 
@@ -235,6 +239,7 @@ def print_verbose(
     files_copied: list[str] | str,
     files_deleted: list[str] | str,
     errors_thrown: list[str] | str,
+    warnings_given: list[str] | str,
 ):
     """print information on file copies and errors"""
     if files_copied:
@@ -255,8 +260,19 @@ def print_verbose(
                 box=box.SQUARE,
             )
         )
-    if errors_thrown:
+    if warnings_given:
         if files_copied or files_deleted:
+            print()
+        warnings_given = "\n".join(warnings_given)
+        rich_print(
+            Panel.fit(
+                f"[orange1]{warnings_given}",
+                title="Warnings",
+                box=box.SQUARE,
+            )
+        )
+    if errors_thrown:
+        if files_copied or files_deleted or warnings_given:
             print()
         errors_thrown = "\n".join(errors_thrown)
         rich_print(
@@ -273,7 +289,13 @@ if __name__ == "__main__":
         print("mkbak requires Python 3.7 or higher")
         sys.exit(1)
     if sys.platform != "linux":
-        print("currently, only linux is supported")
+        print(
+            """
+              currently, only linux is supported.
+              if you're interested in bringing mkbak to your platform, \
+              open an issue at https://github.com/sudo-julia/mkbak/issues
+              """
+        )
         sys.exit(5)
     main()
     sys.exit(0)

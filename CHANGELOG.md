@@ -14,6 +14,8 @@ overwrite `foo.bak` accordingly
 - smart case matching is now the default. `-i|--ignore_case` still provides
 fully case-insensitive matching
 
+- "Warnings" box added to display any issues that don't quite qualify as errors
+
 ## Version 1.1.1
 
 Released 2021-02-03
