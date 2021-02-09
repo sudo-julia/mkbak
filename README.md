@@ -52,15 +52,15 @@ other than '100'
 ### Example
 
 - `mkbak -vi --path "$folder" -q 'pdf$'`
-will launch mkbak searching `$folder`
-, query files ending in 'pdf', ignore case distinctions in file names and
+will launch mkbak searching `$folder`,
+query files ending in 'pdf', ignore case distinctions in file names and
 print out any errors along with files successfully copied
 
 ## Requirements
 
 - [mkbak-iterfzf](https://github.com/sudo-julia/mkbak-iterfzf)
 for the fzf interface
-- [rich](https://github.com/willmcgugan/rich) for formatting with `--verbose`
+- [rich](https://github.com/willmcgugan/rich) for text formatting
 - Python^3.7
 - Linux
 

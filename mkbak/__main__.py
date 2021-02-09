@@ -272,5 +272,8 @@ if __name__ == "__main__":
     if not sys.version_info > (3, 7):
         print("mkbak requires Python 3.7 or higher")
         sys.exit(1)
+    if sys.platform != "linux":
+        print("currently, only linux is supported")
+        sys.exit(5)
     main()
     sys.exit(0)

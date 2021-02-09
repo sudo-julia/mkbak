@@ -1,15 +1,15 @@
 # Changelog
 
-`mkbak` follows semantic versioning, with the exception of the jump between
-0.7.0 and 1.0.0
-
 ## Version 1.1.2
 
-Released 2021-XX-XX
+Released 2021-02-08
 
-- if `foo.bak` already exists, `mkbak` will check if `foo` and `foo.bak`
+- if `foo.bak` already exists, `mkbak` will check:
+  - if `foo` and `foo.bak`
 are identical before making the backup, saving time copying files that are
 already up to date
+  - if `foo.bak` is more recently modified than `foo`, and give the option to
+overwrite `foo.bak` accordingly
 
 - smart case matching is now the default. `-i|--ignore_case` still provides
 fully case-insensitive matching
