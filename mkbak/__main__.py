@@ -15,6 +15,7 @@ from typing import Generator
 from mkbak_iterfzf import iterfzf
 from rich import box
 from rich.panel import Panel
+from rich.prompt import Confirm
 from rich import print as rich_print
 from mkbak import version
 
@@ -40,8 +41,6 @@ def iterate_files(
                 elif entry.name.endswith(".bak"):
                     if delete:
                         yield entry.path
-                    else:
-                        pass
                 elif delete:
                     pass
                 else:
@@ -68,13 +67,11 @@ def copy_all(files: list[str], verbosity: bool):
             # if the location to copy to has been modified more recently than the
             # original file, give the option to overwrite it
             if Path(location).stat().st_mtime > Path(file).stat().st_mtime:
-                overwrite = input(
-                    f" '{location}' exists/is newer than '{file}'. Copy anyway?  [Y/n] "
+                overwrite = Confirm.ask(
+                    f"'{location}' exists/is newer than '{file}'. Copy anyway? ",
                 )
-                if overwrite.casefold() == "y":
-                    print(f"Overwriting '{location}' with '{file}'.\n")
-                else:
-                    print(f"Leaving '{location}' as is.\n")
+                if not overwrite:
+                    errors.append(f"'{location}' left as is")
                     continue
 
         try:
@@ -202,7 +199,6 @@ def main():
     query: str = args.query
     delete: bool = args.delete
     verbose: bool = args.verbose
-    print(f"{ignore=}")
 
     try:
         files: list[str] | None = iterfzf(
