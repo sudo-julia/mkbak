@@ -108,12 +108,6 @@ def delete_backups(files: list[str], verbosity: bool):
 
 def main():
     """parse args and launch the whole thing"""
-    # exit if the user doesn't meet the requirements to run mkbak
-    exit_code: int
-    exit_code = check_requirements()
-    if exit_code > 0:
-        return exit_code
-
     # TODO option to provide files as arguments to backup
     # TODO option for recursion depth specification
     # TODO option to unbak a file (replace original with backup)
@@ -260,10 +254,9 @@ def main():
     elif files and files[0] != "":
         copy_all(files, verbose)
     else:
-        return 130
+        sys.exit(130)
 
     print_verbose(copied, deleted, errors, warnings)
-    return 0
 
 
 def print_verbose(
@@ -313,23 +306,6 @@ def print_verbose(
                 box=box.SQUARE,
             )
         )
-
-
-def check_requirements() -> int:
-    """check if the computer uses the required python version and OS"""
-    if not sys.version_info > (3, 7):
-        print("mkbak requires Python 3.7 or higher in order to run")
-        return 1
-    if sys.platform != "linux":
-        print(
-            """
-              currently, only linux is supported.
-              if you're interested in bringing mkbak to your platform, \
-              open an issue at https://github.com/sudo-julia/mkbak/issues
-              """
-        )
-        return 5
-    return 0
 
 
 if __name__ == "__main__":
