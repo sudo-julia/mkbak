@@ -31,6 +31,10 @@ def iterate_files(
     """
     iterate through files to provide to iterfzf
     """
+    if not Path(search_path).exists():
+        errors.append(f"'{search_path}' does not exist")
+        print_verbose(copied, deleted, errors, warnings)
+        sys.exit(130)
     with os.scandir(search_path) as iterated:
         for entry in iterated:
             try:
