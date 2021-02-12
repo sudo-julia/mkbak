@@ -29,26 +29,33 @@ def iterate_files(
     """
     iterate through files to provide to iterfzf
     """
-    if not Path(search_path).exists():
-        errors.append(f"FileNotFoundError: '{search_path}' does not exist")
+    try:
+        with os.scandir(search_path) as iterated:
+            for entry in iterated:
+                try:
+                    if entry.name.startswith("."):
+                        if find_hidden:
+                            yield entry.path
+                    if recursion and entry.is_dir(follow_symlinks=False):
+                        yield from iterate_files(
+                            entry.path, recursion, delete, find_hidden
+                        )
+                    elif entry.name.endswith(".bak"):
+                        if delete:
+                            yield entry.path
+                    elif delete:
+                        continue
+                    else:
+                        yield entry.path
+                except PermissionError:
+                    if entry.is_dir(follow_symlinks=False):
+                        errors.append(f"Unable to access directory '{entry.path}'.")
+                    else:
+                        errors.append(f"Unable to access file '{entry.path}'.")
+    except FileNotFoundError:
+        errors.append(f"Can't search '{search_path}', as it doesn't exist.")
         print_verbose(copied, deleted, errors, warnings)
         sys.exit(130)
-    with os.scandir(search_path) as iterated:
-        for entry in iterated:
-            try:
-                if not find_hidden and entry.name.startswith("."):  # pass hidden files
-                    pass
-                elif recursion and entry.is_dir(follow_symlinks=False):
-                    yield from iterate_files(entry.path, recursion, delete, find_hidden)
-                elif entry.name.endswith(".bak"):
-                    if delete:
-                        yield entry.path
-                elif delete:
-                    pass
-                else:
-                    yield entry.path
-            except PermissionError:
-                errors.append(f"Permission Denied: Unable to access '{entry}'")
 
 
 def copy_all(files: list[str], verbosity: bool):
@@ -58,9 +65,6 @@ def copy_all(files: list[str], verbosity: bool):
     copy_success: bool = False
 
     for file in files:
-        if file is None:
-            sys.exit(130)
-
         location = f"{file}.bak"
         # operations for if the backup file already exists
         if Path(location).exists():
@@ -75,7 +79,7 @@ def copy_all(files: list[str], verbosity: bool):
                     f"'{location}' exists/is newer than '{file}'. Copy anyway? ",
                 )
                 if not overwrite:
-                    warnings.append(f"'{location}' not overwritten")
+                    warnings.append(f"'{location}' not overwritten.")
                     continue
 
         try:
@@ -86,19 +90,17 @@ def copy_all(files: list[str], verbosity: bool):
         except PermissionError as perm_err:
             # error thrown if no read permissions
             if perm_err.errno == errno.EACCES:
-                errors.append(
-                    f"Permission Denied: '{file}'. Do you have read permissions?"
-                )
+                errors.append(f"Can't access '{file}'. Do you have read permissions?")
             # error thrown if ownership can't be changed
             elif perm_err.errno == errno.EPERM:
                 if Path(location).exists():
                     # the backup was made, but permissions were unable to be changed
                     warnings.append(
-                        f"'{location}' was copied, but ownership couldn't be changed"
+                        f"'{location}' was copied, but ownership couldn't be changed."
                     )
                     copy_success = True
                 else:
-                    errors.append(f"Permission Denied: Unable to back up '{file}'")
+                    errors.append(f"Unable to back up '{file}'.")
         if copy_success and verbosity:
             copied.append(f"{file} -> {location}")
 
@@ -108,21 +110,25 @@ def copy_all(files: list[str], verbosity: bool):
 def delete_backups(files: list[str], verbosity: bool):
     """delete files"""
     for file in files:
-        if file is None:
-            sys.exit(130)
         try:
             os.remove(file)
             if verbosity:
                 deleted.append(f"'{file}'")
-        except PermissionError:
-            errors.append(f"Permission Denied: Unable to delete '{file}'")
+        except PermissionError as perm_err:
+            if perm_err.errno == errno.EACCES:
+                parent = Path(file).parent
+                errors.append(
+                    f"Couldn't delete '{file}'. Do you have write access to '{parent}'?"
+                )
+            else:
+                errors.append(f"Unable to delete '{file}'.")
 
 
 def main():
     """parse args and launch the whole thing"""
     # TODO option to provide files as arguments to backup
     # TODO option for recursion depth specification
-    # TODO option to unbak a file (replace original with backup)
+    # TODO option to unbak a file (replace original with backup) [high priority]
     parser = ArgumentParser()
     main_args = parser.add_argument_group()
     matching_group = parser.add_mutually_exclusive_group()
@@ -256,15 +262,17 @@ def main():
             multi=True,
         )
     except PermissionError:
-        errors.append(f"PermissionError: Unable to access '{path}'")
+        errors.append(
+            f"Unable to access '{path}'. Do you have read/execute permissions?"
+        )
         print_verbose(copied, deleted, errors, warnings)
         sys.exit(13)
 
-    if delete and files and files[0] != "":
-        delete_backups(files, verbose)
-    # if files exist, copy them
-    elif files and files[0] != "":
-        copy_all(files, verbose)
+    if files and files[0] != "":
+        if delete:
+            delete_backups(files, verbose)
+        else:
+            copy_all(files, verbose)
     else:
         sys.exit(130)
 
@@ -318,6 +326,11 @@ def print_verbose(
                 box=box.SQUARE,
             )
         )
+
+
+def gen_msg(file: str | os.DirEntry[str], file_type: str, perm_err: int):
+    """generate an error message based on the file given"""
+    print(file, file_type, perm_err)
 
 
 if __name__ == "__main__":
