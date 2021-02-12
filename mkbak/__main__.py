@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""
-make backups of files selected by mkbak-iterfzf
-"""
 from __future__ import annotations
 import filecmp
+import errno
 import os
 import shutil
 import stat
@@ -32,7 +30,7 @@ def iterate_files(
     iterate through files to provide to iterfzf
     """
     if not Path(search_path).exists():
-        errors.append(f"'{search_path}' does not exist")
+        errors.append(f"FileNotFoundError: '{search_path}' does not exist")
         print_verbose(copied, deleted, errors, warnings)
         sys.exit(130)
     with os.scandir(search_path) as iterated:
@@ -57,7 +55,7 @@ def copy_all(files: list[str], verbosity: bool):
     """copy a file, leaving the owner and group intact"""
     # function from https://stackoverflow.com/a/43761127 (thank you mayra!)
     # copy content, stat-info, mode and timestamps
-    copy_success: bool
+    copy_success: bool = False
 
     for file in files:
         if file is None:
@@ -81,14 +79,26 @@ def copy_all(files: list[str], verbosity: bool):
                     continue
 
         try:
-            shutil.copy2(file, location)
-            # copy owner and group
-            owner_group = os.stat(file)
+            shutil.copy2(file, location)  # copy file
+            owner_group = os.stat(file)  # copy owner and group
             os.chown(location, owner_group[stat.ST_UID], owner_group[stat.ST_GID])
             copy_success = True
-        except PermissionError:
-            errors.append(f"Permission Denied: Unable to back up '{file}'")
-            copy_success = False
+        except PermissionError as perm_err:
+            # error thrown if no read permissions
+            if perm_err.errno == errno.EACCES:
+                errors.append(
+                    f"Permission Denied: '{file}'. Do you have read permissions?"
+                )
+            # error thrown if ownership can't be changed
+            elif perm_err.errno == errno.EPERM:
+                if Path(location).exists():
+                    # the backup was made, but permissions were unable to be changed
+                    warnings.append(
+                        f"'{location}' was copied, but ownership couldn't be changed"
+                    )
+                    copy_success = True
+                else:
+                    errors.append(f"Permission Denied: Unable to back up '{file}'")
         if copy_success and verbosity:
             copied.append(f"{file} -> {location}")
 
@@ -106,8 +116,6 @@ def delete_backups(files: list[str], verbosity: bool):
                 deleted.append(f"'{file}'")
         except PermissionError:
             errors.append(f"Permission Denied: Unable to delete '{file}'")
-        except FileNotFoundError:
-            errors.append(f"File Not Found: '{file}' does not exist")
 
 
 def main():
@@ -160,7 +168,7 @@ def main():
     )
     main_args.add_argument(
         "--no_sort",
-        help="do not sort the results",
+        help="don't sort the results",
         action="store_true",
     )
     main_args.add_argument(
