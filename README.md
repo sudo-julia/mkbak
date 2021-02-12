@@ -1,6 +1,7 @@
 # mkbak.py
 
-[![PyPI version](https://badge.fury.io/py/mkbak.svg)](https://badge.fury.io/py/mkbak)
+![PyPI](https://img.shields.io/pypi/v/mkbak?color=informational&style=flat-square)
+![Scrutinizer code quality (GitHub/Bitbucket)](https://img.shields.io/scrutinizer/quality/g/sudo-julia/mkbak/main?style=flat-square)
 
 `mkbak` is a commandline utility to painlessly create file backups.  
 It interfaces with `fzf` as a menu for file selection, allowing you to
@@ -30,13 +31,14 @@ from your current directory
 
 ### Arguments
 
-- `-h|--help` display all options
+- `-h, --help` display all options
 - `--version`             print version information
+- `-a, --all`             show hidden and 'dot' files
+- `--ansi`                enable processing of ANSI color codes
+- `--bind`                custom keybindings. refer to fzf's manpage
 - `-d, --delete`          iterate through '.bak' files to delete
   - please note that this search can take a while, as it's only returning
 '.bak' files
-- `-q [QUERY], --query [QUERY]` start the finder with the given query
-- `-a, --all`             show hidden and 'dot' files
 - `-e, --exact`           exact matching
 - `--height [HEIGHT]`       display fzf window with the given height
   - Please note that the `--height` argument will be overridden if set to '100' and
@@ -45,10 +47,13 @@ other than '100'
 - `-i, --ignore_case`     ignore case distinction
 - `--no_mouse`            disable mouse interaction
 - `--no_recursion`        run mkbak without recursing through subdirectories
+- `--no_sort`             don't sort the results
+- `--padding`             the padding inside fzf's border
 - `-p [PATH], --path [PATH]`  directory to iterate through (default '.')
 - `--preview [PREVIEW]`     starts external process with current line as arg
 - `--print_query`         print query as the first line
 - `--prompt [PROMPT]`       input prompt (default: '> ')
+- `-q [QUERY], --query [QUERY]` start the finder with the given query
 - `-v, --verbose`         explain what is being done
 
 ### Example
@@ -79,8 +84,13 @@ Open an issue or PR
 - [X] Package for pypi
 - [X] Define entry point so the program can be run as `mkbak`
 - [X] Add all options to README
+- [X] Github releases
+- [ ] Create a mode to replace a regular file with its backup
+- [ ] Create documentation
 - [ ] Shell completions
 
 ## Credits
+
+Thanks to [junegunn](https://github.com/junegunn) for making [fzf](https://github.com/junegunn/fzf)
 
 Thanks to [dahlia](https://github.com/dahlia) for making [iterfzf](https://github.com/dahlia/iterfzf)

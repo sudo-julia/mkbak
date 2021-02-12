@@ -1,14 +1,24 @@
 # Changelog
 
+## Version 1.2.1
+
+Released 2021-02-XX
+
+- Bugfix: File Handling:
+  - Previously when the user had read permission to a file, but no ownership,
+the file was copied, but an error was thrown saying that access was denied.
+`mkbak` will now detect during which stage of copying the file an error occurred,
+and inform the user accordingly.
+
 ## Version 1.2.0
 
 Released 2021-02-09
 
 - `mkbak_iterfzf` version upgrade
-- `ansi` option added
-- `bind` option added
-- `no_sort` option added
-- `padding` option added
+- Added `ansi` option
+- Added `bind` option
+- Added `no_sort` option
+- Added `padding` option
 
 ## Version 1.1.2
 
