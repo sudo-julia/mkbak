@@ -2,12 +2,13 @@
 from __future__ import annotations
 import filecmp
 import errno
+import posix
 import os
 import shutil
 import stat
 import sys
 from argparse import ArgumentParser
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import Generator
 from mkbak_iterfzf import iterfzf
 from rich import box
@@ -29,26 +30,35 @@ def iterate_files(
     """
     iterate through files to provide to iterfzf
     """
-    if not Path(search_path).exists():
+    # TODO should the internals of this be moved to a function?
+    try:
+        with os.scandir(search_path) as iterated:
+            for entry in iterated:
+                try:
+                    if not find_hidden and entry.name.startswith(
+                        "."
+                    ):  # pass hidden files
+                        pass
+                    elif recursion and entry.is_dir(follow_symlinks=False):
+                        yield from iterate_files(
+                            entry.path, recursion, delete, find_hidden
+                        )
+                    elif entry.name.endswith(".bak"):
+                        if delete:
+                            yield entry.path
+                    elif delete:
+                        pass
+                    else:
+                        yield entry.path
+                except PermissionError:
+                    if entry.is_dir(follow_symlinks=False):
+                        errors.append(f"Unable to access directory '{entry.path}'")
+                    else:
+                        errors.append(f"Unable to access file '{entry.path}'")
+    except FileNotFoundError:
         errors.append(f"FileNotFoundError: '{search_path}' does not exist")
         print_verbose(copied, deleted, errors, warnings)
         sys.exit(130)
-    with os.scandir(search_path) as iterated:
-        for entry in iterated:
-            try:
-                if not find_hidden and entry.name.startswith("."):  # pass hidden files
-                    pass
-                elif recursion and entry.is_dir(follow_symlinks=False):
-                    yield from iterate_files(entry.path, recursion, delete, find_hidden)
-                elif entry.name.endswith(".bak"):
-                    if delete:
-                        yield entry.path
-                elif delete:
-                    pass
-                else:
-                    yield entry.path
-            except PermissionError:
-                errors.append(f"Permission Denied: Unable to access '{entry}'")
 
 
 def copy_all(files: list[str], verbosity: bool):
@@ -58,9 +68,6 @@ def copy_all(files: list[str], verbosity: bool):
     copy_success: bool = False
 
     for file in files:
-        if file is None:
-            sys.exit(130)
-
         location = f"{file}.bak"
         # operations for if the backup file already exists
         if Path(location).exists():
@@ -86,9 +93,7 @@ def copy_all(files: list[str], verbosity: bool):
         except PermissionError as perm_err:
             # error thrown if no read permissions
             if perm_err.errno == errno.EACCES:
-                errors.append(
-                    f"Permission Denied: '{file}'. Do you have read permissions?"
-                )
+                errors.append(f"Can't access '{file}'. Do you have read permissions?")
             # error thrown if ownership can't be changed
             elif perm_err.errno == errno.EPERM:
                 if Path(location).exists():
@@ -98,7 +103,7 @@ def copy_all(files: list[str], verbosity: bool):
                     )
                     copy_success = True
                 else:
-                    errors.append(f"Permission Denied: Unable to back up '{file}'")
+                    errors.append(f"Unable to back up '{file}'")
         if copy_success and verbosity:
             copied.append(f"{file} -> {location}")
 
@@ -108,8 +113,6 @@ def copy_all(files: list[str], verbosity: bool):
 def delete_backups(files: list[str], verbosity: bool):
     """delete files"""
     for file in files:
-        if file is None:
-            sys.exit(130)
         try:
             os.remove(file)
             if verbosity:
