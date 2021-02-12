@@ -1,0 +1,20 @@
+checks:
+  python:
+    code_rating: true
+    duplicate_code: true
+
+build:
+  nodes:
+    analysis:
+      resources:
+        cpus: 4
+      project_setup:
+        override:
+          - 'true'
+      tests:
+        override:
+          - py-scrutinizer-run
+          -
+              command: pylint-run
+              use_website_config: false
+    tests: true

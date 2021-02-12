@@ -7,7 +7,7 @@ import shutil
 import stat
 import sys
 from argparse import ArgumentParser
-from pathlib import Path, PosixPath
+from pathlib import Path
 from typing import Generator
 from mkbak_iterfzf import iterfzf
 from rich import box
@@ -49,11 +49,11 @@ def iterate_files(
                         yield entry.path
                 except PermissionError:
                     if entry.is_dir(follow_symlinks=False):
-                        errors.append(f"Unable to access directory '{entry.path}'")
+                        errors.append(f"Unable to access directory '{entry.path}'.")
                     else:
-                        errors.append(f"Unable to access file '{entry.path}'")
+                        errors.append(f"Unable to access file '{entry.path}'.")
     except FileNotFoundError:
-        errors.append(f"FileNotFoundError: '{search_path}' does not exist")
+        errors.append(f"Can't search '{search_path}', as it doesn't exist.")
         print_verbose(copied, deleted, errors, warnings)
         sys.exit(130)
 
@@ -79,7 +79,7 @@ def copy_all(files: list[str], verbosity: bool):
                     f"'{location}' exists/is newer than '{file}'. Copy anyway? ",
                 )
                 if not overwrite:
-                    warnings.append(f"'{location}' not overwritten")
+                    warnings.append(f"'{location}' not overwritten.")
                     continue
 
         try:
@@ -96,11 +96,11 @@ def copy_all(files: list[str], verbosity: bool):
                 if Path(location).exists():
                     # the backup was made, but permissions were unable to be changed
                     warnings.append(
-                        f"'{location}' was copied, but ownership couldn't be changed"
+                        f"'{location}' was copied, but ownership couldn't be changed."
                     )
                     copy_success = True
                 else:
-                    errors.append(f"Unable to back up '{file}'")
+                    errors.append(f"Unable to back up '{file}'.")
         if copy_success and verbosity:
             copied.append(f"{file} -> {location}")
 
@@ -114,15 +114,21 @@ def delete_backups(files: list[str], verbosity: bool):
             os.remove(file)
             if verbosity:
                 deleted.append(f"'{file}'")
-        except PermissionError:
-            errors.append(f"Permission Denied: Unable to delete '{file}'")
+        except PermissionError as perm_err:
+            if perm_err.errno == errno.EACCES:
+                parent = Path(file).parent
+                errors.append(
+                    f"Couldn't delete '{file}'. Do you have write access to '{parent}'?"
+                )
+            else:
+                errors.append(f"Unable to delete '{file}'.")
 
 
 def main():
     """parse args and launch the whole thing"""
     # TODO option to provide files as arguments to backup
     # TODO option for recursion depth specification
-    # TODO option to unbak a file (replace original with backup)
+    # TODO option to unbak a file (replace original with backup) [high priority]
     parser = ArgumentParser()
     main_args = parser.add_argument_group()
     matching_group = parser.add_mutually_exclusive_group()
@@ -256,7 +262,9 @@ def main():
             multi=True,
         )
     except PermissionError:
-        errors.append(f"PermissionError: Unable to access '{path}'")
+        errors.append(
+            f"Unable to access '{path}'. Do you have read/execute permissions?"
+        )
         print_verbose(copied, deleted, errors, warnings)
         sys.exit(13)
 
@@ -318,6 +326,11 @@ def print_verbose(
                 box=box.SQUARE,
             )
         )
+
+
+def gen_msg(file: str | os.DirEntry[str], file_type: str, perm_err: int):
+    """generate an error message based on the file given"""
+    print(file, file_type, perm_err)
 
 
 if __name__ == "__main__":
