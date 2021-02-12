@@ -4,6 +4,7 @@
 
 Released 2021-02-XX
 
+- Errors are slightly more verbose/conversational
 - Bugfix: File Handling:
   - Previously when the user had read permission to a file, but no ownership,
 the file was copied, but an error was thrown saying that access was denied.

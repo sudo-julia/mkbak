@@ -2,7 +2,6 @@
 from __future__ import annotations
 import filecmp
 import errno
-import posix
 import os
 import shutil
 import stat
@@ -30,16 +29,14 @@ def iterate_files(
     """
     iterate through files to provide to iterfzf
     """
-    # TODO should the internals of this be moved to a function?
     try:
         with os.scandir(search_path) as iterated:
             for entry in iterated:
                 try:
-                    if not find_hidden and entry.name.startswith(
-                        "."
-                    ):  # pass hidden files
-                        pass
-                    elif recursion and entry.is_dir(follow_symlinks=False):
+                    if entry.name.startswith("."):
+                        if find_hidden:
+                            yield entry.path
+                    if recursion and entry.is_dir(follow_symlinks=False):
                         yield from iterate_files(
                             entry.path, recursion, delete, find_hidden
                         )
@@ -47,7 +44,7 @@ def iterate_files(
                         if delete:
                             yield entry.path
                     elif delete:
-                        pass
+                        continue
                     else:
                         yield entry.path
                 except PermissionError:
@@ -263,11 +260,11 @@ def main():
         print_verbose(copied, deleted, errors, warnings)
         sys.exit(13)
 
-    if delete and files and files[0] != "":
-        delete_backups(files, verbose)
-    # if files exist, copy them
-    elif files and files[0] != "":
-        copy_all(files, verbose)
+    if files and files[0] != "":
+        if delete:
+            delete_backups(files, verbose)
+        else:
+            copy_all(files, verbose)
     else:
         sys.exit(130)
 
