@@ -16,16 +16,37 @@ interactively choose which files to back up.
 
 - `pip install --user -U mkbak`
 
-### Building from source
+### With Poetry
 
 - Download the repository:
   - `git clone https://github.com/sudo-julia/mkbak`
 - Enter the repo
   - `cd mkbak`
-- Build the package
+- Install dependencies:
+  - `poetry install`
+- Run mkbak:
+  - `poetry run mkbak`
+    - To avoid typing this every time you want to run the program,
+you can alias the above command with: `alias mkbak='poetry run mkbak'`.
+
+### From Source
+
+- Download the repository:
+  - `git clone https://github.com/sudo-julia/mkbak`
+- Enter the repo
+  - `cd mkbak`
+- Build the package:
   - `python3 setup.py sdist bdist_wheel`
 - Install from the local build
   - `pip install --user -U .`
+- Run mkbak:
+  - `mkbak`
+  - Please note that running from a local build may not set up the entry point
+correctly, resulting in: `bash: command not found: mkbak`. In this case, simply
+run `alias mkbak='python3 -m mkbak'`. This sets up `mkbak` to be run as
+a module when `mkbak` is typed, which solves the entry point problem.
+You can add the `alias` command to the bottom of your shell's configuration file
+for it to be set automatically at your terminal's initialization.
 
 ## Usage
 
