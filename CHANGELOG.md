@@ -6,11 +6,15 @@ Released 2021-02-XX
 
 - Global variable initialization moved to `__init__.py`
 - Project structure changed
-  - Argument parsing moved to module
   - .pyi files added
   - py.typed files added
+  - Argument parsing moved to module
+  - Arguments stored as a dictionary (as opposed to argparse's Namespace object)
+for consistency in setting variables. Previously, some values would be renamed
+and some would be passed to `iterfzf` as is, but the dictionary allows values to
+be changed in place
 
-- Bugfixes:
+- Bugfixes
   - IsADirectoryError is now handled within mkbak
 
 ## Version 1.2.1
@@ -19,7 +23,7 @@ Released 2021-02-12
 
 - Errors are more verbose, suggest fixes based off of error handling and have
 a more human syntax
-- Bugfixes:
+- Bugfixes
   - Previously when the user had read permission to a file, but no ownership,
 the file was copied, but an error was thrown saying that access was denied.
 `mkbak` will now detect during which stage of copying the file an error occurred,

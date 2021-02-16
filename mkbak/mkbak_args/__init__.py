@@ -1,10 +1,11 @@
 """arguments for mkbak"""
 from __future__ import annotations
 import argparse
+from typing import Any
 from mkbak import VERSION  # type: ignore
 
 
-def get_arguments() -> argparse.Namespace:
+def get_arguments() -> dict[str, Any]:
     """get the arguments"""
     # TODO option to provide files as arguments to backup
     # TODO option for recursion depth specification
@@ -98,4 +99,4 @@ def get_arguments() -> argparse.Namespace:
         action="version",
     )
 
-    return parser.parse_args()
+    return vars(parser.parse_args())

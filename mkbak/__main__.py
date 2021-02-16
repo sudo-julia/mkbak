@@ -6,9 +6,8 @@ import os
 import shutil
 import stat
 import sys
-from argparse import Namespace
 from pathlib import Path
-from typing import Generator
+from typing import Any, Generator
 from mkbak_iterfzf import iterfzf
 from rich import box
 from rich.panel import Panel
@@ -125,66 +124,65 @@ def delete_backups(files: list[str], verbosity: bool):
 
 def main():
     """parse args and launch the whole thing"""
-    args: Namespace = get_arguments()
+    args: dict[str, Any] = get_arguments()
 
-    ansi: bool = args.ansi
-    bind: str | None = args.bind
-    delete: bool = args.delete
-    exact: bool = args.exact
-    # set height as a constant, using a oneliner if-else statement
-    height: str | None = f"{args.height}%" if args.height in range(0, 100) else None
-    hidden: bool = args.all
+    # set height if valid
+    if args["height"] in range(0, 100):
+        args["height"] = f"{args['height']}%"
     # set the case-sensitive option in accordance to iterfzf's options
-    # (None for smartcase, False for case-insensitivity
-    ignore: bool | None = False if args.ignore_case else None
-    mouse: bool = args.no_mouse
-    padding: str | None = f"{args.padding}%" if args.padding in range(0, 50) else None
+    # (None for smartcase, False for case-insensitivity)
+    if args["ignore_case"]:
+        args["ignore_case"] = False
+    else:
+        args["ignore_case"] = None
+    if args["padding"] not in range(0, 50):
+        args["padding"] = None
     # set the path as argument given, and expand '~' to "$HOME" if given
-    path: str = args.path if args.path[0] != "~" else str(Path(args.path).expanduser())
-    preview: str | None = args.preview
-    print_query: bool = args.print_query
+    if args["path"][0] == "~":
+        args["path"] = str(Path(args["path"]).expanduser())
     # set prompt to default unless in 'delete' mode
-    prompt: str = args.prompt if not args.delete else "rm > "
-    query: str = args.query
-    recursion: bool = args.no_recursion
-    sort: bool = args.no_sort
-    verbose: bool = args.verbose
+    if args["delete"]:
+        args["prompt"] = "rm > "
 
-    files: list[str] | None
     try:
         files = iterfzf(
-            iterable=(iterate_files(path, recursion, delete, hidden)),
-            ansi=ansi,
-            bind=bind,
-            case_sensitive=ignore,
-            exact=exact,
+            iterable=(
+                iterate_files(
+                    args["path"], args["no_recursion"], args["delete"], args["all"]
+                )
+            ),
+            ansi=args["ansi"],
+            bind=args["bind"],
+            case_sensitive=args["ignore_case"],
+            exact=args["exact"],
             encoding="utf-8",
-            height=height,
-            query=query,
-            padding=padding,
-            preview=preview,
-            print_query=print_query,
-            prompt=prompt,
-            no_sort=sort,
-            mouse=mouse,
+            height=args["height"],
+            query=args["query"],
+            padding=args["padding"],
+            preview=args["preview"],
+            print_query=args["print_query"],
+            prompt=args["prompt"],
+            no_sort=args["no_sort"],
+            mouse=args["no_mouse"],
             multi=True,
         )
     except PermissionError:
         errors.append(
-            f"Unable to access '{path}'. Do you have read/execute permissions?"
+            f"Unable to access '{args['path']}'. Do you have read/execute permissions?"
         )
         print_verbose(copied, deleted, errors, warnings)
         sys.exit(13)
 
     if files and files[0] != "":
-        if delete:
-            delete_backups(files, verbose)
+        if args["delete"]:
+            delete_backups(files, args["verbose"])
         else:
-            copy_all(files, verbose)
+            copy_all(files, args["verbose"])
     else:
         sys.exit(130)
 
     print_verbose(copied, deleted, errors, warnings)
+    return 0
 
 
 def print_verbose(
@@ -234,12 +232,6 @@ def print_verbose(
                 box=box.SQUARE,
             )
         )
-
-
-# TODO finish this
-def gen_msg(file: str | os.DirEntry[str], file_type: str, perm_err: int):
-    """generate an error message based on the file given"""
-    print(file, file_type, perm_err)
 
 
 if __name__ == "__main__":
