@@ -103,12 +103,13 @@ See [CHANGELOG.md](https://github.com/sudo-julia/mkbak/blob/main/CHANGELOG.md)
 
 Open an issue or PR
 
-## ToDo
+## TODO
 
 - [X] Package for pypi
 - [X] Define entry point so the program can be run as `mkbak`
 - [X] Add all options to README
 - [X] Github releases
+- [ ] Move argument parsing to a separate module
 - [ ] Create a mode to replace a regular file with its backup
 - [ ] Create documentation
 - [ ] Shell completions

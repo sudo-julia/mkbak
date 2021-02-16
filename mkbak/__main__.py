@@ -14,17 +14,15 @@ from rich import box
 from rich.panel import Panel
 from rich.prompt import Confirm
 from rich import print as rich_print
-from mkbak import version
+from mkbak import copied, deleted, errors, warnings, version
 
 
-copied: list[str] = []
-deleted: list[str] = []
-errors: list[str] = []
-warnings: list[str] = []
-
-
+# TODO find a way to break this up
 def iterate_files(
-    search_path: str, recursion: bool, delete: bool, find_hidden: bool = False
+    search_path: str,
+    recursion: bool,
+    delete: bool,
+    find_hidden: bool = False,
 ) -> Generator[str, None, None]:
     """
     iterate through files to provide to iterfzf
@@ -33,25 +31,22 @@ def iterate_files(
         with os.scandir(search_path) as iterated:
             for entry in iterated:
                 try:
-                    if entry.name.startswith("."):
-                        if find_hidden:
-                            yield entry.path
+                    if not find_hidden and entry.name.startswith("."):
+                        continue
+                    if delete and not entry.name.endswith(".bak"):
+                        continue
+                    if not delete and entry.name.endswith(".bak"):
+                        continue
                     if recursion and entry.is_dir(follow_symlinks=False):
                         yield from iterate_files(
                             entry.path, recursion, delete, find_hidden
                         )
-                    elif entry.name.endswith(".bak"):
-                        if delete:
-                            yield entry.path
-                    elif delete:
-                        continue
-                    else:
-                        yield entry.path
                 except PermissionError:
                     if entry.is_dir(follow_symlinks=False):
                         errors.append(f"Unable to access directory '{entry.path}'.")
                     else:
                         errors.append(f"Unable to access file '{entry.path}'.")
+                yield entry.path
     except FileNotFoundError:
         errors.append(f"Can't search '{search_path}', as it doesn't exist.")
         print_verbose(copied, deleted, errors, warnings)
@@ -87,6 +82,9 @@ def copy_all(files: list[str], verbosity: bool):
             owner_group = os.stat(file)  # copy owner and group
             os.chown(location, owner_group[stat.ST_UID], owner_group[stat.ST_GID])
             copy_success = True
+        except IsADirectoryError:
+            # TODO work out skipping directories or a separate copy for them
+            warnings.append(f"Couldn't copy directory '{file}'")
         except PermissionError as perm_err:
             # error thrown if no read permissions
             if perm_err.errno == errno.EACCES:
@@ -131,7 +129,7 @@ def main():
     # TODO option to unbak a file (replace original with backup) [high priority]
     parser = ArgumentParser()
     main_args = parser.add_argument_group()
-    matching_group = parser.add_mutually_exclusive_group()
+    mkbak_mode = parser.add_mutually_exclusive_group()
 
     main_args.add_argument(
         "-a", "--all", help="show hidden and 'dot' files", action="store_true"
@@ -146,7 +144,7 @@ def main():
         help="custom keybindings. refer to fzf's manpage",
         type=str,
     )
-    matching_group.add_argument(
+    mkbak_mode.add_argument(
         "-d",
         "--delete",
         help="iterate through '.bak' files to delete",
@@ -201,7 +199,7 @@ def main():
     main_args.add_argument(
         "--prompt", default="> ", help="input prompt (default: '> ')", type=str
     )
-    matching_group.add_argument(
+    mkbak_mode.add_argument(
         "-q",
         "--query",
         default="",
@@ -214,7 +212,7 @@ def main():
     parser.add_argument(
         "--version",
         help="print version information",
-        version=f"mkbak.py {version}",
+        version=f"mkbak.py v{version}",
         action="version",
     )
 

@@ -1,12 +1,21 @@
 # Changelog
 
+## Version 1.2.2
+
+Released 2021-02-XX
+
+- Global variable initialization moved to `__init__.py`
+
+- Bugfixes:
+  - IsADirectoryError is now handled within mkbak
+
 ## Version 1.2.1
 
 Released 2021-02-12
 
 - Errors are more verbose, suggest fixes based off of error handling and have
 a more human syntax
-- Bugfix: File Handling:
+- Bugfixes:
   - Previously when the user had read permission to a file, but no ownership,
 the file was copied, but an error was thrown saying that access was denied.
 `mkbak` will now detect during which stage of copying the file an error occurred,
