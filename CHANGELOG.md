@@ -5,6 +5,10 @@
 Released 2021-02-XX
 
 - Global variable initialization moved to `__init__.py`
+- Project structure changed
+  - Argument parsing moved to module
+  - .pyi files added
+  - py.typed files added
 
 - Bugfixes:
   - IsADirectoryError is now handled within mkbak

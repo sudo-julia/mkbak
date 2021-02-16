@@ -6,7 +6,7 @@ import os
 import shutil
 import stat
 import sys
-from argparse import ArgumentParser
+from argparse import Namespace
 from pathlib import Path
 from typing import Generator
 from mkbak_iterfzf import iterfzf
@@ -14,7 +14,8 @@ from rich import box
 from rich.panel import Panel
 from rich.prompt import Confirm
 from rich import print as rich_print
-from mkbak import copied, deleted, errors, warnings, version
+from mkbak import copied, deleted, errors, warnings
+from mkbak.mkbak_args import get_arguments
 
 
 # TODO find a way to break this up
@@ -124,99 +125,7 @@ def delete_backups(files: list[str], verbosity: bool):
 
 def main():
     """parse args and launch the whole thing"""
-    # TODO option to provide files as arguments to backup
-    # TODO option for recursion depth specification
-    # TODO option to unbak a file (replace original with backup) [high priority]
-    parser = ArgumentParser()
-    main_args = parser.add_argument_group()
-    mkbak_mode = parser.add_mutually_exclusive_group()
-
-    main_args.add_argument(
-        "-a", "--all", help="show hidden and 'dot' files", action="store_true"
-    )
-    main_args.add_argument(
-        "--ansi",
-        help="enable processing of ANSI color codes",
-        action="store_true",
-    )
-    main_args.add_argument(
-        "--bind",
-        help="custom keybindings. refer to fzf's manpage",
-        type=str,
-    )
-    mkbak_mode.add_argument(
-        "-d",
-        "--delete",
-        help="iterate through '.bak' files to delete",
-        action="store_true",
-    )
-    main_args.add_argument("-e", "--exact", help="exact matching", action="store_true")
-    main_args.add_argument(
-        "--height",
-        help="display fzf window with the given height",
-        type=int,
-    )
-    main_args.add_argument(
-        "-i",
-        "--ignore_case",
-        help="ignore case distinction",
-        action="store_true",
-    )
-    main_args.add_argument(
-        "--no_mouse", help="disable mouse interaction", action="store_false"
-    )
-    main_args.add_argument(
-        "--no_recursion",
-        help="run mkbak without recursing through subdirectories",
-        action="store_false",
-    )
-    main_args.add_argument(
-        "--no_sort",
-        help="don't sort the results",
-        action="store_true",
-    )
-    main_args.add_argument(
-        "--padding",
-        help="padding inside the menu's border",
-        type=int,
-    )
-    main_args.add_argument(
-        "-p",
-        "--path",
-        default=".",
-        help="directory to iterate through (default '.')",
-        type=str,
-    )
-    main_args.add_argument(
-        "--preview",
-        default=None,
-        help="starts external process with current line as arg",
-        type=str,
-    )
-    main_args.add_argument(
-        "--print_query", help="print query as the first line", action="store_true"
-    )
-    main_args.add_argument(
-        "--prompt", default="> ", help="input prompt (default: '> ')", type=str
-    )
-    mkbak_mode.add_argument(
-        "-q",
-        "--query",
-        default="",
-        help="start the finder with the given query",
-        type=str,
-    )
-    main_args.add_argument(
-        "-v", "--verbose", help="explain what is being done", action="store_true"
-    )
-    parser.add_argument(
-        "--version",
-        help="print version information",
-        version=f"mkbak.py v{version}",
-        action="version",
-    )
-
-    args = parser.parse_args()
+    args: Namespace = get_arguments()
 
     ansi: bool = args.ansi
     bind: str | None = args.bind
@@ -241,8 +150,9 @@ def main():
     sort: bool = args.no_sort
     verbose: bool = args.verbose
 
+    files: list[str] | None
     try:
-        files: list[str] | None = iterfzf(
+        files = iterfzf(
             iterable=(iterate_files(path, recursion, delete, hidden)),
             ansi=ansi,
             bind=bind,
@@ -326,6 +236,7 @@ def print_verbose(
         )
 
 
+# TODO finish this
 def gen_msg(file: str | os.DirEntry[str], file_type: str, perm_err: int):
     """generate an error message based on the file given"""
     print(file, file_type, perm_err)

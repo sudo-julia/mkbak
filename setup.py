@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
-from mkbak import version
+from mkbak import VERSION  # type: ignore
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
     name="mkbak",
-    version=version,
+    version=VERSION,
     author="Julia A M",
     author_email="jlearning@tuta.io",
     description="a commandline utility to create file backups",
@@ -14,6 +14,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/sudo-julia/mkbak",
     packages=find_packages(),
+    modules=["mkbak_args"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",

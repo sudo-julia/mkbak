@@ -3,4 +3,4 @@ max-locals=25
 max-statements=60
 
 [MESSAGES CONTROL]
-disable=missing-module-docstring
+disable=missing-module-docstring, unsubscriptable-object
