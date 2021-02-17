@@ -1,8 +1,13 @@
 # Changelog
 
-## Version 1.2.2
+## Version 2.0.0
 
 Released 2021-02-XX
+
+`mkbak` v2 is here! Due to major changes in the way arguments are handled and
+types are stored, older versions of `mkbak` will experience breaking changes.
+The new changes should allow for less cluttered and more readable project files,
+with an increase in modularity as well.
 
 - Global variable initialization moved to `__init__.py`
 - Project structure changed

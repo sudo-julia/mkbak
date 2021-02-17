@@ -84,13 +84,13 @@ def copy_all(files: list[str], verbosity: bool):
             copy_success = True
         except IsADirectoryError:
             # TODO work out skipping directories or a separate copy for them
-            warnings.append(f"Couldn't copy directory '{file}'")
+            warnings.append(f"Couldn't copy directory '{file}'.")
         except PermissionError as perm_err:
             # error thrown if no read permissions
             if perm_err.errno == errno.EACCES:
                 errors.append(f"Can't access '{file}'. Do you have read permissions?")
             # error thrown if ownership can't be changed
-            elif perm_err.errno == errno.EPERM:
+            else:
                 if Path(location).exists():
                     # the backup was made, but permissions were unable to be changed
                     warnings.append(
@@ -135,8 +135,9 @@ def main():
         args["ignore_case"] = False
     else:
         args["ignore_case"] = None
-    if args["padding"] not in range(0, 50):
-        args["padding"] = None
+    # s
+    if args["padding"] in range(0, 50):
+        args["padding"] = f"{args['padding']}%"
     # set the path as argument given, and expand '~' to "$HOME" if given
     if args["path"][0] == "~":
         args["path"] = str(Path(args["path"]).expanduser())

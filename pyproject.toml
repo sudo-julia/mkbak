@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mkbak"
-version = "1.2.2"
+version = "2.0.0"
 description = "make backups of files in a given directory"
 authors = ["sudo-julia <jlearning@tuta.io>"]
 license = "GPL-3.0"

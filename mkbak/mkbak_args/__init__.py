@@ -89,6 +89,12 @@ def get_arguments() -> dict[str, Any]:
         help="start the finder with the given query",
         type=str,
     )
+    mkbak_mode.add_argument(
+        "-u",
+        "--unbak",
+        help="restore files to their most recent backup",
+        action="store_true",
+    )
     main_args.add_argument(
         "-v", "--verbose", help="explain what is being done", action="store_true"
     )
