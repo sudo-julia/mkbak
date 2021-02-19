@@ -1,9 +1,7 @@
-.github
 .mypy_cache/
 .python-version
 build/
 dist/
-IDEAS.md
 poetry.lock
 *.pyc
 mkbak.egg-info

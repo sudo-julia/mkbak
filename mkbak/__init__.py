@@ -1,1 +1,5 @@
-version: str = "1.2.1"
+copied = []
+deleted = []
+errors = []
+warnings = []
+VERSION = "1.2.2"

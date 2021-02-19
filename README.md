@@ -8,7 +8,7 @@
 
 `mkbak` is a commandline utility to painlessly create file backups.  
 It interfaces with `fzf` as a menu for file selection, allowing you to
-interactively choose which files to back up.
+quickly select files.
 
 ## Installation
 
@@ -103,13 +103,14 @@ See [CHANGELOG.md](https://github.com/sudo-julia/mkbak/blob/main/CHANGELOG.md)
 
 Open an issue or PR
 
-## ToDo
+## TODO
 
 - [X] Package for pypi
 - [X] Define entry point so the program can be run as `mkbak`
 - [X] Add all options to README
 - [X] Github releases
-- [ ] Create a mode to replace a regular file with its backup
+- [X] Move argument parsing to a separate module
+- [ ] Mode to replace a regular file with its backup
 - [ ] Create documentation
 - [ ] Shell completions
 
