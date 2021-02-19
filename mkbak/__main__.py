@@ -31,12 +31,16 @@ def iterate_files(
         with os.scandir(search_path) as iterated:
             for entry in iterated:
                 try:
-                    if not find_hidden and entry.name.startswith("."):
-                        continue
-                    if delete and not entry.name.endswith(".bak"):
-                        continue
-                    if not delete and entry.name.endswith(".bak"):
-                        continue
+                    if not find_hidden:
+                        if entry.name.startswith("."):
+                            continue
+                    if not delete:
+                        if entry.name.endswith(".bak"):
+                            continue
+                    else:
+                        if not entry.name.endswith(".bak"):
+                            continue
+                        yield entry.path
                     if recursion and entry.is_dir(follow_symlinks=False):
                         yield from iterate_files(
                             entry.path, recursion, delete, find_hidden

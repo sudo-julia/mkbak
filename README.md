@@ -8,7 +8,7 @@
 
 `mkbak` is a commandline utility to painlessly create file backups.  
 It interfaces with `fzf` as a menu for file selection, allowing you to
-interactively choose which files to back up.
+quickly select files.
 
 ## Installation
 
@@ -110,7 +110,7 @@ Open an issue or PR
 - [X] Add all options to README
 - [X] Github releases
 - [X] Move argument parsing to a separate module
-- [ ] Create a mode to replace a regular file with its backup
+- [ ] Mode to replace a regular file with its backup
 - [ ] Create documentation
 - [ ] Shell completions
 
