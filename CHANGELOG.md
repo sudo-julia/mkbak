@@ -2,7 +2,7 @@
 
 ## Version 1.2.2
 
-Released 2021-02-XX
+Released 2021-02-19
 
 - Global variable initialization moved to `__init__.py`
 - Project structure changed
