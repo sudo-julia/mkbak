@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2020-2021 sudo-julia.
 #
-# This file is part of mkbak 
+# This file is part of mkbak
 # (see https://github.com/sudo-julia/mkbak).
 #
 # This program is free software: you can redistribute it and/or modify
@@ -59,7 +59,6 @@ def iterate_files(
                         if not entry.name.endswith(".bak"):
                             continue
                     if recursion and entry.is_dir(follow_symlinks=False):
-                        depth += 1
                         yield from iterate_files(
                             entry.path, recursion, delete, find_hidden
                         )

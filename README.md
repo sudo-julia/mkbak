@@ -5,6 +5,8 @@
 ![PyPI - License](https://img.shields.io/pypi/l/mkbak)
 ![Scrutinizer code quality (GitHub/Bitbucket)](https://img.shields.io/scrutinizer/quality/g/sudo-julia/mkbak/main?style=flat)
 ![PyPI - Format](https://img.shields.io/pypi/format/mkbak?color=informational)
+![GitHub last commit](https://img.shields.io/github/last-commit/sudo-julia/mkbak)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/sudo-julia/mkbak)
 
 `mkbak` is a commandline utility to painlessly create file backups.  
 It interfaces with `fzf` as a menu for file selection, allowing you to
