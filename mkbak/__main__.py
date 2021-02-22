@@ -31,26 +31,25 @@ def iterate_files(
         with os.scandir(search_path) as iterated:
             for entry in iterated:
                 try:
-                    if not find_hidden:
-                        if entry.name.startswith("."):
-                            continue
+                    if not find_hidden and entry.name.startswith("."):
+                        continue
                     if not delete:
                         if entry.name.endswith(".bak"):
                             continue
                     else:
                         if not entry.name.endswith(".bak"):
                             continue
-                        yield entry.path
                     if recursion and entry.is_dir(follow_symlinks=False):
+                        depth += 1
                         yield from iterate_files(
                             entry.path, recursion, delete, find_hidden
                         )
+                    yield entry.path
                 except PermissionError:
                     if entry.is_dir(follow_symlinks=False):
                         errors.append(f"Unable to access directory '{entry.path}'.")
                     else:
                         errors.append(f"Unable to access file '{entry.path}'.")
-                yield entry.path
     except FileNotFoundError:
         errors.append(f"Can't search '{search_path}', as it doesn't exist.")
         print_verbose(copied, deleted, errors, warnings)
@@ -197,6 +196,7 @@ def print_verbose(
     warnings_given: list[str] | str,
 ):
     """print information on file copies and errors"""
+    print_line: bool = False
     if files_copied:
         files_copied = "\n".join(files_copied)
         rich_print(
@@ -206,6 +206,7 @@ def print_verbose(
                 box=box.SQUARE,
             )
         )
+        print_line = True
     elif files_deleted:
         files_deleted = "\n".join(files_deleted)
         rich_print(
@@ -215,8 +216,9 @@ def print_verbose(
                 box=box.SQUARE,
             )
         )
+        print_line = True
     if warnings_given:
-        if files_copied or files_deleted:
+        if print_line:
             print()
         warnings_given = "\n".join(warnings_given)
         rich_print(
@@ -226,8 +228,9 @@ def print_verbose(
                 box=box.SQUARE,
             )
         )
+        print_line = True
     if errors_thrown:
-        if files_copied or files_deleted or warnings_given:
+        if print_line:
             print()
         errors_thrown = "\n".join(errors_thrown)
         rich_print(
