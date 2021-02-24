@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2020-2021 sudo-julia.
 #
-# This file is part of mkbak 
+# This file is part of mkbak
 # (see https://github.com/sudo-julia/mkbak).
 #
 # This program is free software: you can redistribute it and/or modify

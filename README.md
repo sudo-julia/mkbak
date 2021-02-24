@@ -52,35 +52,35 @@ for it to be set automatically at your terminal's initialization.
 
 ## Usage
 
-- Run `mkbak [options]` to start searching for files to backup
-from your current directory
+```text
+usage: mkbak [-h] [-a] [--ansi] [--bind BIND] [-d] [-e] [--height HEIGHT] [-i] [--no_mouse] [--no_recursion]
+             [--no_sort] [--padding PADDING] [-p PATH] [--preview PREVIEW] [--print_query] [--prompt PROMPT]
+             [-q QUERY] [-u] [-v] [--version]
 
-### Arguments
+optional arguments:
+  -h, --help            show this help message and exit
+  -d, --delete          iterate through '.bak' files to delete
+  -q QUERY, --query QUERY
+                        start the finder with the given query
+  -u, --unbak           restore files to their most recent backup
+  --version             print version information
 
-- `-h, --help` display all options
-- `--version`             print version information
-- `-a, --all`             show hidden and 'dot' files
-- `--ansi`                enable processing of ANSI color codes
-- `--bind`                custom keybindings. refer to fzf's manpage
-- `-d, --delete`          iterate through '.bak' files to delete
-  - please note that this search can take a while, as it's only returning
-'.bak' files
-- `-e, --exact`           exact matching
-- `--height [HEIGHT]`       display fzf window with the given height
-  - Please note that the `--height` argument will be overridden if set to '100' and
-the environment variable `$FZF_DEFAULT_OPTS` contains `--height` set to something
-other than '100'
-- `-i, --ignore_case`     ignore case distinction
-- `--no_mouse`            disable mouse interaction
-- `--no_recursion`        run mkbak without recursing through subdirectories
-- `--no_sort`             don't sort the results
-- `--padding`             the padding inside fzf's border
-- `-p [PATH], --path [PATH]`  directory to iterate through (default '.')
-- `--preview [PREVIEW]`     starts external process with current line as arg
-- `--print_query`         print query as the first line
-- `--prompt [PROMPT]`       input prompt (default: '> ')
-- `-q [QUERY], --query [QUERY]` start the finder with the given query
-- `-v, --verbose`         explain what is being done
+  -a, --all             show hidden and 'dot' files
+  --ansi                enable processing of ANSI color codes
+  --bind BIND           custom keybindings. refer to fzf's manpage
+  -e, --exact           exact matching
+  --height HEIGHT       display fzf window with the given height
+  -i, --ignore_case     ignore case distinction
+  --no_mouse            disable mouse interaction
+  --no_recursion        run mkbak without recursing through subdirectories
+  --no_sort             don't sort the results
+  --padding PADDING     padding inside the menu's border
+  -p PATH, --path PATH  directory to iterate through (default '.')
+  --preview PREVIEW     starts external process with current line as arg
+  --print_query         print query as the first line
+  --prompt PROMPT       input prompt (default: '> ')
+  -v, --verbose         explain what is being done
+```
 
 ### Example
 
