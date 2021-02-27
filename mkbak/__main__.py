@@ -36,7 +36,6 @@ from mkbak import copied, deleted, errors, warnings
 from mkbak.mkbak_args import get_arguments
 
 
-# TODO find a way to break this up
 def iterate_files(
     search_path: str,
     recursion: bool,
@@ -46,32 +45,26 @@ def iterate_files(
     """
     iterate through files to provide to iterfzf
     """
-    try:
-        with os.scandir(search_path) as iterated:
-            for entry in iterated:
-                try:
-                    if not find_hidden and entry.name.startswith("."):
-                        continue
-                    if not delete:
-                        if entry.name.endswith(".bak"):
-                            continue
-                    else:
-                        if not entry.name.endswith(".bak"):
-                            continue
-                    if recursion and entry.is_dir(follow_symlinks=False):
-                        yield from iterate_files(
-                            entry.path, recursion, delete, find_hidden
-                        )
-                    yield entry.path
-                except PermissionError:
-                    if entry.is_dir(follow_symlinks=False):
-                        errors.append(f"Unable to access directory '{entry.path}'.")
-                    else:
-                        errors.append(f"Unable to access file '{entry.path}'.")
-    except FileNotFoundError:
-        errors.append(f"Can't search '{search_path}', as it doesn't exist.")
-        print_verbose(copied, deleted, errors, warnings)
-        sys.exit(130)
+    iterated = os.scandir(search_path)
+    for entry in iterated:
+        try:
+            if not find_hidden and entry.name.startswith("."):
+                continue
+            if not delete:
+                if entry.name.endswith(".bak"):
+                    continue
+            else:
+                if not entry.name.endswith(".bak"):
+                    continue
+            if recursion and entry.is_dir(follow_symlinks=False):
+                yield from iterate_files(entry.path, recursion, delete, find_hidden)
+            yield entry.path
+        except PermissionError:
+            if entry.is_dir(follow_symlinks=False):
+                errors.append(f"Unable to access directory '{entry.path}'.")
+            else:
+                errors.append(f"Unable to access file '{entry.path}'.")
+    iterated.close()
 
 
 def copy_all(files: list[str], verbosity: bool):
@@ -188,6 +181,10 @@ def main():
             mouse=args["no_mouse"],
             multi=True,
         )
+    except FileNotFoundError:
+        errors.append(f"Can't search nonexistent dir '{args['path']}'.")
+        print_verbose(copied, deleted, errors, warnings)
+        sys.exit(130)
     except PermissionError:
         errors.append(
             f"Unable to access '{args['path']}'. Do you have read/execute permissions?"

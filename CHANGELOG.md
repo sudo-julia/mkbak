@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 1.2.3
+
+Released 2021-xx-xx
+
+- Testing of search path limited to main(), removing a level of indentation
+from iterate_files()
+- Opening of directory to search switched to older open/close to remove another
+level of indentation
+
 ## Version 1.2.2
 
 Released 2021-02-19
