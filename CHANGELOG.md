@@ -1,13 +1,16 @@
 # Changelog
 
-## Version 1.2.3
+## Version 1.3.0
 
-Released 2021-xx-xx
+Released 2021-03-01
 
-- Testing of search path limited to main(), removing a level of indentation
-from iterate_files()
+- Progress bar added when copying or deleting files
+- Removed excessive indentation
 - Opening of directory to search switched to older open/close to remove another
 level of indentation
+
+- Bugfixes
+  - `--no_sort` now works
 
 ## Version 1.2.2
 

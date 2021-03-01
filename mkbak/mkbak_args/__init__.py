@@ -20,6 +20,7 @@
 """arguments for mkbak"""
 from __future__ import annotations
 import argparse
+from pathlib import Path
 from typing import Any
 from mkbak import VERSION  # type: ignore
 
@@ -124,4 +125,6 @@ def get_arguments() -> dict[str, Any]:
         action="version",
     )
 
-    return vars(parser.parse_args())
+    args = vars(parser.parse_args())
+
+    return args

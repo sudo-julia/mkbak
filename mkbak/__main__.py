@@ -30,6 +30,7 @@ from typing import Any, Generator
 from mkbak_iterfzf import iterfzf
 from rich import box
 from rich.panel import Panel
+from rich.progress import track
 from rich.prompt import Confirm
 from rich import print as rich_print
 from mkbak import copied, deleted, errors, warnings
@@ -73,7 +74,7 @@ def copy_all(files: list[str], verbosity: bool):
     # copy content, stat-info, mode and timestamps
     copy_success: bool = False
 
-    for file in files:
+    for file in track(files, description="Copying files..."):
         location = f"{file}.bak"
         # operations for if the backup file already exists
         if Path(location).exists():
@@ -121,7 +122,7 @@ def copy_all(files: list[str], verbosity: bool):
 #      -- functionally similar to rm -i|-I
 def delete_backups(files: list[str], verbosity: bool):
     """delete files"""
-    for file in files:
+    for file in track(files, description="Deleting files..."):
         try:
             os.remove(file)
             if verbosity:
@@ -160,12 +161,13 @@ def main():
         args["prompt"] = "rm > "
 
     try:
+        files_iterated = iterate_files(
+            args["path"], args["no_recursion"], args["delete"], args["all"]
+        )
+        if not args["no_sort"]:
+            files_iterated = sorted(files_iterated)
         files = iterfzf(
-            iterable=(
-                iterate_files(
-                    args["path"], args["no_recursion"], args["delete"], args["all"]
-                )
-            ),
+            iterable=files_iterated,
             ansi=args["ansi"],
             bind=args["bind"],
             case_sensitive=args["ignore_case"],
@@ -197,6 +199,7 @@ def main():
             delete_backups(files, args["verbose"])
         else:
             copy_all(files, args["verbose"])
+        del files
     else:
         sys.exit(130)
 
