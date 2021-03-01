@@ -152,5 +152,4 @@ def get_arguments() -> dict[str, Any]:
     if args["delete"]:
         args["prompt"] = "rm > "
 
-    print(args)
     return args
