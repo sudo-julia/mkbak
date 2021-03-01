@@ -141,25 +141,6 @@ def main():
     """parse args and launch the whole thing"""
     args: dict[str, Any] = get_arguments()
 
-    # set height if valid
-    if args["height"] in range(0, 100):
-        args["height"] = f"{args['height']}%"
-    # set the case-sensitive option in accordance to iterfzf's options
-    # (None for smartcase, False for case-insensitivity)
-    if args["ignore_case"]:
-        args["ignore_case"] = False
-    else:
-        args["ignore_case"] = None
-    # s
-    if args["padding"] in range(0, 50):
-        args["padding"] = f"{args['padding']}%"
-    # set the path as argument given, and expand '~' to "$HOME" if given
-    if args["path"][0] == "~":
-        args["path"] = str(Path(args["path"]).expanduser())
-    # set prompt to default unless in 'delete' mode
-    if args["delete"]:
-        args["prompt"] = "rm > "
-
     try:
         files_iterated = iterate_files(
             args["path"], args["no_recursion"], args["delete"], args["all"]

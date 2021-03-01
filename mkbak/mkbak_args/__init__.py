@@ -127,4 +127,30 @@ def get_arguments() -> dict[str, Any]:
 
     args = vars(parser.parse_args())
 
+    # set height if valid
+    if args["height"] in range(0, 100):
+        args["height"] = f"{args['height']}%"
+    elif args["height"] and args["height"] > 100:
+        args["height"] = "100%"
+    else:
+        args["height"] = "50%"
+    # set the case-sensitive option in accordance to iterfzf's options
+    # (None for smartcase, False for case-insensitivity)
+    if args["ignore_case"]:
+        args["ignore_case"] = False
+    else:
+        args["ignore_case"] = None
+    # set padding
+    if args["padding"] in range(0, 51):
+        args["padding"] = f"{args['padding']}%"
+    else:
+        args["padding"] = None
+    # set the path as argument given, and expand '~' to "$HOME" if given
+    if args["path"][0] == "~":
+        args["path"] = str(Path(args["path"]).expanduser())
+    # set prompt to default unless in 'delete' mode
+    if args["delete"]:
+        args["prompt"] = "rm > "
+
+    print(args)
     return args

@@ -8,9 +8,11 @@ Released 2021-03-01
 - Removed excessive indentation
 - Opening of directory to search switched to older open/close to remove another
 level of indentation
+- Argument handling moved to `mkbak_args`
 
 - Bugfixes
   - `--no_sort` now works
+  - Better value-checking with `--height` and `--padding`
 
 ## Version 1.2.2
 
